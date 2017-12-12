@@ -7,7 +7,7 @@
     "test": "npm run jest && npm run lint",
     "jest": "jest",
     "jestWatch": "jest --watch --notify",
-    "build": "babel src -d lib --copy-files",
+    "build": "jison src/parser.jison -o lib/parser.js && babel src -d lib --copy-files",
     "lint": "eslint src/"
   },
   "jest": {
@@ -45,7 +45,8 @@
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^3.0.1",
     "jest": "^21.2.1",
-    "jest-cli": "^21.2.1"
+    "jest-cli": "^21.2.1",
+    "jison": "^0.4.18"
   },
   "optionalDependencies": {}
 }
