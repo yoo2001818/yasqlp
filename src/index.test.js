@@ -2,7 +2,7 @@ import { parse } from './parser';
 
 describe('parser', () => {
   it('should parse basic SQL', () => {
-    expect(parse('SELECT a.b FROM a WHERE c = 5 AND b = 9;')).toEqual([
+    expect(parse('SELECT a.b FROM a WHERE c = 5;')).toEqual([
       {
         type: 'select',
         columns: [['a', 'b']],
