@@ -10,6 +10,10 @@
 (or|OR)\b return 'or';
 (and|AND)\b return 'and';
 (not|NOT)\b return 'not';
+(in|IN)\b return 'in';
+(null|NULL)\b return 'null';
+(default|DEFAULT)\b return 'default';
+(count|COUNT)\b return 'count';
 "=" return '=';
 [a-zA-Z_][a-zA-Z_0-9]*\b return 'keyword';
 ";" return ';';
@@ -20,6 +24,10 @@
 ">" return '>';
 "<" return '<';
 "!" return '!';
+"+" return '+';
+"-" return '-';
+"/" return '/';
+"*" return '*';
 <<EOF>> return 'EOF';
 /lex
 
@@ -77,6 +85,65 @@ whereValue
   | constant {$$ = $1;}
   ;
 
+rowValueElem
+  : null {$$ = { type: 'null' };}
+  | default {$$ = { type: 'default' };}
+  | valueExpression
+  ;
+
+valueExpression
+  : numericExpression {$$ = $1;}
+  | stringExpression {$$ = $1;}
+  | datetimeExpression {$$ = $1;}
+  | intervalExpression {$$ = $1;}
+  ;
+
+numericExpression
+  : numericMulExpr
+  | numericExpression '+' numericMulExpr
+  | numericExpression '-' numericMulExpr 
+  ;
+
+numericMulExpr
+  : numericValue
+  | numericMulExpr '*' numericValue
+  | numericMulExpr '/' numericValue
+  ;
+
+sign
+  : '+'
+  | '-'
+  ;
+
+numericValue
+  : sign numericPrimary
+  | numericPrimary
+  ;
+
+numericPrimary
+  : number
+  | column
+  | subquery
+  | caseExpression
+  | count '(' '*' ')'
+  | aggrExpression
+  | '(' numericExpression ')'
+  | castExpression
+  ;
+
+aggrFunction
+  : avg
+  | max
+  | min
+  | sum
+  | count
+  ;
+
+aggrExpression
+  : aggrFunction '(' aggrQualifier numericExpression ')'
+  | aggrFunction '(' numericExpression ')'
+  ;
+
 // WHERE a = b OR c = d AND (e = f AND g = h)
 
 queryOr
@@ -111,4 +178,5 @@ compareOp
 
 predicate
   : whereValue compareOp whereValue {$$ = { type: $2, left: $1, right: $2 };}
+  | whereValue in 
   ;
