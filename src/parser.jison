@@ -13,7 +13,8 @@
 (in|IN)\b return 'in';
 (null|NULL)\b return 'null';
 (default|DEFAULT)\b return 'default';
-(count|COUNT)\b return 'count';
+(distinct|DISTINCT)\b return 'distinct';
+(all|ALL)\b return 'all';
 "=" return '=';
 [a-zA-Z_][a-zA-Z_0-9]*\b return 'keyword';
 ";" return ';';
@@ -76,19 +77,10 @@ table
   : keyword {$$ = $1;}
   ;
 
-constant
-  : number {$$ = { type: 'number', value: $1 };}
-  | string {$$ = { type: 'string', value: $1 }};
-
-whereValue
-  : column {$$ = $1;}
-  | constant {$$ = $1;}
-  ;
-
 rowValueElem
   : null {$$ = { type: 'null' };}
   | default {$$ = { type: 'default' };}
-  | valueExpression
+  | valueExpression {$$ = { type: 'expr' };}
   ;
 
 valueExpression
@@ -98,50 +90,58 @@ valueExpression
   | intervalExpression {$$ = $1;}
   ;
 
-numericExpression
-  : numericMulExpr
-  | numericExpression '+' numericMulExpr
-  | numericExpression '-' numericMulExpr 
+expression
+  : mulExpr {$$ = $1;}
+  | expression '+' mulExpr {$$ = { type: '+', left: $1, right: $3 };}
+  | expression '-' mulExpr {$$ = { type: '-', left: $1, right: $3 };}
   ;
 
-numericMulExpr
-  : numericValue
-  | numericMulExpr '*' numericValue
-  | numericMulExpr '/' numericValue
+mulExpr
+  : valueExpr {$$ = { type: 'value', value: $1 };}
+  | mulExpr '*' valueExpr {$$ = { type: '*', left: $1, right: $3 };}
+  | mulExpr '/' valueExpr {$$ = { type: '/', left: $1, right: $3 };}
   ;
 
 sign
-  : '+'
-  | '-'
+  : '+' {$$ = '+';}
+  | '-' {$$ = '-';}
   ;
 
-numericValue
-  : sign numericPrimary
-  | numericPrimary
+valueExpr
+  : '+' primaryExpr {$$ = $2;}
+  | '-' primaryExpr {$$ = { type: 'invert', value: $2 };}
+  | primaryExpr {$$ = $1;}
   ;
 
-numericPrimary
-  : number
-  | column
-  | subquery
-  | caseExpression
-  | count '(' '*' ')'
+primaryExpr
+  : number {$$ = { type: 'number', value: Number(yytext) };}
+  | string {$$ = { type: 'string', value: yytext };}
+  | column {$$ = { type: 'column', value: $1 };}
+  | subquery {$$ = { type: 'subquery', value: $1 };}
+  | '*' {$$ = { type: 'wildcard' };}
+  // | caseExpression
+  // | count '(' '*' ')'
   | aggrExpression
-  | '(' numericExpression ')'
-  | castExpression
+  | '(' numericExpression ')' {$$ = { type: 'expression', value: $2 };}
+  // | castExpression
   ;
 
-aggrFunction
-  : avg
-  | max
-  | min
-  | sum
-  | count
+aggrQualifier
+  : distinct {$$ = yytext;}
+  | all {$$ = yytext;}
   ;
 
 aggrExpression
-  : aggrFunction '(' aggrQualifier numericExpression ')'
-  | aggrFunction '(' numericExpression ')'
+  : keyword '(' aggrQualifier numericExpression ')' {
+      $$ = { type: 'aggregate', type: $1, qualifier: $3, value: $4 };
+    }
+  | keyword '(' numericExpression ')' {
+      $$ = { type: 'aggregate', type: $1, qualifier: null, value: $3 };
+    }
+  ;
+
+subquery
+  : selectStmt {$$ = $1;}
   ;
 
 // WHERE a = b OR c = d AND (e = f AND g = h)
