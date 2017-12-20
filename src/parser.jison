@@ -10,6 +10,7 @@
 (or|OR)\b return 'or';
 (and|AND)\b return 'and';
 (not|NOT)\b return 'not';
+(is|IS)\b return 'is';
 (in|IN)\b return 'in';
 (null|NULL)\b return 'null';
 (default|DEFAULT)\b return 'default';
@@ -43,14 +44,14 @@ expression
   ;
 
 selectStmt
-  : select columns from tables where query ';' {
+  : select selectList from tables where queryOr ';' {
     $$ = {
       type: 'select',
       columns: $2,
       tables: $4,
       where: $6,
     };}
-  | select columns from tables ';' {
+  | select selectList from tables ';' {
     $$ = {
       type: 'select',
       columns: $2,
@@ -58,14 +59,24 @@ selectStmt
     };}
   ;
 
-columns
-  : column {$$ = [$1];}
-  | columns ',' column {$$ = $1.concat($2);}
+selectList
+  : '*' {$$ = { wildcard: true };}
+  | selectSubList {$$ = $1;}
+  ;
+
+selectSubList
+  : selectEntry {$$ = [$1];}
+  | selectSubList ',' selectEntry {$$ = $1.concat($2);}
+  ;
+
+selectEntry
+  : keyword '.' '*' {$$ = { table: $1, wildcard: true };}
+  | column {$$ = $1;}
   ;
 
 column
-  : keyword {$$ = $1;}
-  | keyword '.' keyword {$$ = [$1, $3];}
+  : keyword {$$ = { table: null, column: $1 };}
+  | keyword '.' keyword {$$ = { table: $1, column: $3 };}
   ;
 
 tables
@@ -77,17 +88,20 @@ table
   : keyword {$$ = $1;}
   ;
 
-rowValueElem
+rowValue
   : null {$$ = { type: 'null' };}
   | default {$$ = { type: 'default' };}
-  | valueExpression {$$ = { type: 'expr' };}
+  | expression {$$ = $1;}
   ;
 
-valueExpression
-  : numericExpression {$$ = $1;}
-  | stringExpression {$$ = $1;}
-  | datetimeExpression {$$ = $1;}
-  | intervalExpression {$$ = $1;}
+rowValueList
+  : subquery {$$ = $1;}
+  | '(' rowValueSubList ')' {$$ = $2;}
+  ;
+
+rowValueSubList
+  : rowValue {$$ = [$1];}
+  | rowValueSubList ',' rowValue {$$ = $1.concat($2);}
   ;
 
 expression
@@ -97,7 +111,7 @@ expression
   ;
 
 mulExpr
-  : valueExpr {$$ = { type: 'value', value: $1 };}
+  : valueExpr {$$ = $1;}
   | mulExpr '*' valueExpr {$$ = { type: '*', left: $1, right: $3 };}
   | mulExpr '/' valueExpr {$$ = { type: '/', left: $1, right: $3 };}
   ;
@@ -141,7 +155,7 @@ aggrExpression
   ;
 
 subquery
-  : selectStmt {$$ = $1;}
+  : '(' selectStmt ')' {$$ = $2;}
   ;
 
 // WHERE a = b OR c = d AND (e = f AND g = h)
@@ -177,6 +191,7 @@ compareOp
   ;
 
 predicate
-  : whereValue compareOp whereValue {$$ = { type: $2, left: $1, right: $2 };}
-  | whereValue in 
+  : rowValue compareOp rowValue {$$ = { type: $2, left: $1, right: $3 };}
+  | rowValue in rowValueList {$$ = { type: 'in', left: $1, right: $3 };}
+  | rowValue is null {$$ = { type: 'isNull', left: $1 };}
   ;
