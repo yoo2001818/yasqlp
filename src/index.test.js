@@ -1,8 +1,14 @@
-import { parse } from './parser';
+import nearley from 'nearley';
+import grammar from './grammar';
 
 describe('parser', () => {
+  var parser;
+  beforeEach(() => {
+    parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+  });
   it('should parse basic SQL', () => {
-    expect(parse('SELECT a.b FROM a WHERE c = 5;')).toEqual([
+    parser.feed('SELECT a.b FROM a WHERE c = 5;');
+    expect(parser.results).toEqual([
       {
         type: 'select',
         columns: [['a', 'b']],
