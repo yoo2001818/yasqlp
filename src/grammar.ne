@@ -9,7 +9,39 @@ selectList ->
   | selectEntry ("," selectEntry):*
 
 selectEntry ->
-    keyword ".*"
+    keyword ".*" (__ "as"i __ keyword):?
+  | column (__ "as"i __ keyword):?
+
+column ->
+    keyword
+  | keyword "." keyword
+
+selectTables ->
+    table ("," table):*
+
+table ->
+    keyword __ ("as"i __ keyword):?
+
+queryOr ->
+    queryAnd
+  | queryOr "or"i queryAnd
+
+queryAnd ->
+    queryFactor
+  | queryAnd "and"i queryFactor
+
+queryFactor -> ("not"i):? query
+
+query ->
+    "(" queryOr ")"
+  | predicate
+
+perdicate ->
+    rowValue compareOp rowValue
+  | rowValue "in"i rowValueList
+  | rowValue "is"i ("not"i):? "null"i
+
+compareOp -> "<"
 
 
 number -> [0-9]+(\.[0-9]+)?
