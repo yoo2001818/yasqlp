@@ -1,12 +1,15 @@
+@builtin "whitespace.ne"
+@builtin "number.ne"
+
 main -> (statement ";"):+
 statement ->
   selectStatement
 
-selectStatement -> "select"i __ selectList __ ("from"i __ selectTables):? _ ("where"i queryOr _):? ";"
+selectStatement -> "select"i __ selectList __ ("from"i __ selectTables):? _ ("where"i __ queryOr):? _ ";"
 
 selectList ->
     "*"
-  | selectEntry ("," selectEntry):*
+  | selectEntry _ ("," _ selectEntry):*
 
 selectEntry ->
     keyword ".*" (__ "as"i __ keyword):?
@@ -24,26 +27,51 @@ table ->
 
 queryOr ->
     queryAnd
-  | queryOr "or"i queryAnd
+  | queryOr _ "or"i _ queryAnd
 
 queryAnd ->
     queryFactor
-  | queryAnd "and"i queryFactor
+  | queryAnd _ "and"i _ queryFactor
 
-queryFactor -> ("not"i):? query
+queryFactor -> ("not"i __):? query
 
 query ->
-    "(" queryOr ")"
+    "(" _ queryOr _ ")"
   | predicate
 
-perdicate ->
-    rowValue compareOp rowValue
-  | rowValue "in"i rowValueList
-  | rowValue "is"i ("not"i):? "null"i
+predicate ->
+    rowValue _ compareOp _ rowValue
+  | rowValue __ "in"i __ rowValueList
+  | rowValue __ "is"i __ ("not"i):? "null"i
 
-compareOp -> "<"
+compareOp -> [<>=] | "<>" | "<=" | ">=" | "!="
 
+rowValueList ->
+    "(" _ rowValue (_ "," _ rowValue):* _ ")"
+  | subquery
 
-number -> [0-9]+(\.[0-9]+)?
-string -> '(.+)'
-keyword -> [a-zA-Z_][a-zA-Z_0-9]*
+rowValue ->
+    "null"i
+  | "default"i
+  | expression
+
+expression -> (expression _ [+\-] _):? mulExpr
+
+mulExpr -> (mulExpr _ [*/] _):? valueExpr
+
+valueExpr -> ([+\-] _):? primaryExpr
+
+primaryExpr ->
+    number
+  | string
+  | column
+  | subquery
+  | "*"
+  | aggrExpression
+  | "(" _ numericExpression _ ")"
+
+subquery -> "(" _ selectStatement _ ")"
+
+number -> int | decimal
+string -> "'" .:* "'"
+keyword -> [a-zA-Z_] [a-zA-Z_0-9]:*
