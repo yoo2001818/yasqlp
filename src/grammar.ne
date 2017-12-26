@@ -5,7 +5,7 @@ main -> (statement ";"):+
 statement ->
   selectStatement
 
-selectStatement -> "select"i __ selectList __ ("from"i __ selectTables):? _ ("where"i __ queryOr):? _ ";"
+selectStatement -> "select"i __ selectList (__ "from"i __ selectTables):? (__ "where"i __ queryOr):?
 
 selectList ->
     "*"
@@ -15,15 +15,11 @@ selectEntry ->
     keyword ".*" (__ "as"i __ keyword):?
   | column (__ "as"i __ keyword):?
 
-column ->
-    keyword
-  | keyword "." keyword
-
 selectTables ->
-    table ("," table):*
+    table _ ("," _ table):*
 
 table ->
-    keyword __ ("as"i __ keyword):?
+    keyword (__ "as"i __ keyword):?
 
 queryOr ->
     queryAnd
@@ -42,7 +38,9 @@ query ->
 predicate ->
     rowValue _ compareOp _ rowValue
   | rowValue __ "in"i __ rowValueList
-  | rowValue __ "is"i __ ("not"i):? "null"i
+  | rowValue __ "is"i __ ("not"i __):? "null"i
+  | rowValue __ ("not"i __):? "like"i __ string
+  | rowValue __ ("not"i __):? "between"i __ rowValue __ "and"i __ rowValue
 
 compareOp -> [<>=] | "<>" | "<=" | ">=" | "!="
 
@@ -55,9 +53,9 @@ rowValue ->
   | "default"i
   | expression
 
-expression -> (expression _ [+\-] _):? mulExpr
+expression -> (mulExpr _ [+\-] _):* mulExpr
 
-mulExpr -> (mulExpr _ [*/] _):? valueExpr
+mulExpr -> (valueExpr _ [*/] _):* valueExpr
 
 valueExpr -> ([+\-] _):? primaryExpr
 
@@ -68,10 +66,18 @@ primaryExpr ->
   | subquery
   | "*"
   | aggrExpression
-  | "(" _ numericExpression _ ")"
+  | "(" _ expression _ ")"
 
 subquery -> "(" _ selectStatement _ ")"
 
-number -> int | decimal
+aggrExpression -> keyword _ "(" _ (aggrQualifier __):? expression _ ")"
+
+aggrQualifier -> "distinct"i | "all"i
+
+column ->
+    keyword
+  | keyword "." keyword
+
+number -> decimal
 string -> "'" .:* "'"
 keyword -> [a-zA-Z_] [a-zA-Z_0-9]:*
