@@ -29,16 +29,12 @@ queryAnd ->
     queryFactor
   | queryAnd _ "and"i _ queryFactor
 
-queryFactor -> ("not"i __):? query
-
-query ->
-    "(" _ queryOr _ ")"
-  | predicate
+queryFactor -> ("not"i __):? predicate 
 
 predicate ->
     rowValue _ compareOp _ rowValue
-  | rowValue __ "in"i __ rowValueList
-  | rowValue __ "is"i __ ("not"i __):? "null"i
+  | rowValue __ ("not"i __):? "in"i __ rowValueList
+  | rowValue __ "is"i __ ("not"i __):? rowValue
   | rowValue __ ("not"i __):? "like"i __ string
   | rowValue __ ("not"i __):? "between"i __ rowValue __ "and"i __ rowValue
 
@@ -66,7 +62,7 @@ primaryExpr ->
   | subquery
   | "*"
   | aggrExpression
-  | "(" _ expression _ ")"
+  | "(" _ queryOr _ ")"
 
 subquery -> "(" _ selectStatement _ ")"
 
