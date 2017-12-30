@@ -56,24 +56,24 @@ mulExpr -> (valueExpr _ [*/] _):* valueExpr
 valueExpr -> ([+\-] _):? primaryExpr
 
 primaryExpr ->
-    number
-  | string
-  | column
-  | subquery
-  | "*"
-  | aggrExpression
-  | "(" _ queryOr _ ")"
+    number {% id %}
+  | string {% id %}
+  | column {% id %}
+  | subquery {% id %}
+  | "*" {% () => ({ type: 'wildcard' }) %}
+  | aggrExpression {% id %}
+  | "(" _ queryOr _ ")" {% d => d[1] %}
 
-subquery -> "(" _ selectStatement _ ")"
+subquery -> "(" _ selectStatement _ ")" {% d => d[2] %}
 
 aggrExpression -> keyword _ "(" _ (aggrQualifier __):? expression _ ")"
 
 aggrQualifier -> "distinct"i | "all"i
 
 column ->
-    keyword
-  | keyword "." keyword
+    keyword {% d => ({ type: 'column', table: null, name: d[0] }) %}
+  | keyword '.' keyword {% d => ({ type: 'column', table: d[0], name: d[1] }) %}
 
-number -> decimal
-string -> "'" .:* "'"
-keyword -> [a-zA-Z_] [a-zA-Z_0-9]:*
+number -> decimal {% d => ({ type: 'number', value: d[0] }) %}
+string -> "'" .:* "'" {% d => ({ type: 'string', value: d[1] }) %}
+keyword -> [a-zA-Z_] [a-zA-Z_0-9]:* {% d => { type: 'keyword', value: d.join('') }) %}
