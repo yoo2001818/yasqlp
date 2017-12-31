@@ -7,19 +7,18 @@ statement ->
 
 selectStatement -> "select"i __ selectList (__ "from"i __ selectTables):? (__ "where"i __ queryOr):?
 
-selectList ->
-    "*"
-  | selectEntry _ ("," _ selectEntry):*
+selectList -> selectEntry _ ("," _ selectEntry):*
 
 selectEntry ->
-    keyword ".*" (__ "as"i __ keyword):?
-  | column (__ "as"i __ keyword):?
+    rowValue
+  | rowValue __ "as"i __ keyword
 
 selectTables ->
     table _ ("," _ table):*
 
 table ->
     keyword (__ "as"i __ keyword):?
+  | subquery (__ "as"i __ keyword):?
 
 queryOr ->
     queryAnd
@@ -60,7 +59,7 @@ primaryExpr ->
   | string {% id %}
   | column {% id %}
   | subquery {% id %}
-  | "*" {% () => ({ type: 'wildcard' }) %}
+  | "*" {% () => ({ type: 'wildcard', table: null }) %}
   | aggrExpression {% id %}
   | "(" _ queryOr _ ")" {% d => d[1] %}
 
@@ -72,8 +71,9 @@ aggrQualifier -> "distinct"i | "all"i
 
 column ->
     keyword {% d => ({ type: 'column', table: null, name: d[0] }) %}
-  | keyword '.' keyword {% d => ({ type: 'column', table: d[0], name: d[1] }) %}
+  | keyword "." keyword {% d => ({ type: 'column', table: d[0], name: d[1] }) %}
+  | keyword ".*" {% d => ({ type: 'wildcard', table: d[0] }) %}
 
 number -> decimal {% d => ({ type: 'number', value: d[0] }) %}
 string -> "'" .:* "'" {% d => ({ type: 'string', value: d[1] }) %}
-keyword -> [a-zA-Z_] [a-zA-Z_0-9]:* {% d => { type: 'keyword', value: d.join('') }) %}
+keyword -> [a-zA-Z_] [a-zA-Z_0-9]:* {% d => ({ type: 'keyword', value: d[0] + d[1].join('') }) %}
