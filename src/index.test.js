@@ -1,5 +1,5 @@
 import nearley from 'nearley';
-import grammar from './grammar';
+import grammar from './grammar.ne';
 
 describe('parser', () => {
   var parser;

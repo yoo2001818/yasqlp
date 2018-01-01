@@ -5,14 +5,15 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "npm run jest && npm run lint",
-    "jest": "jest",
-    "jestWatch": "jest --watch --notify",
+    "jest": "jest src/",
+    "jestWatch": "jest --watch --notify src/",
     "build": "nearleyc src/grammar.ne -o lib/grammar.js && babel src -d lib --copy-files",
     "lint": "eslint src/"
   },
   "jest": {
     "transform": {
-      "^.+\\.jsx?$": "babel-jest"
+      "^.+\\.jsx?$": "babel-jest",
+      "^.+\\.ne$": "<rootDir>/src/jestNearley.js"
     }
   },
   "repository": {
