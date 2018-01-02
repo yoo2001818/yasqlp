@@ -7,7 +7,7 @@ describe('parser', () => {
     parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
   });
   it('should parse basic SQL', () => {
-    parser.feed('SELECT a.b FROM a WHERE c = 5 AND b = 9;');
+    parser.feed('SELECT a.b FROM a WHERE c = 5 AND b = 9 + 1 + 2 + 3 AND c BETWEEN 1 AND 5;');
     expect(parser.results).toEqual([
       /* {
         type: 'select',

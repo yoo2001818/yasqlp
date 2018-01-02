@@ -31,25 +31,25 @@ rowValueList ->
 rowValue ->
     "null"i
   | "default"i
-  | expression {% id %}
+  | shiftExpr {% id %}
 
 expression -> expressionOr {% id %}
 
 expressionOr ->
     expressionAnd {% id %}
   | (expressionAnd __ ("or"i | "||") __):+ expressionAnd {%
-      d => ({ type: 'or', values: d[0].map(b => b[0]).concat(d[1]) })
+      d => ({ type: 'binary', op: '||', values: d[0].map(b => b[0]).concat(d[1]) })
     %}
 
 expressionAnd ->
     expressionFactor {% id %}
   | (expressionFactor __ ("and"i | "&&") __):+ expressionFactor {%
-      d => ({ type: 'and', values: d[0].map(b => b[0]).concat(d[1]) })
+      d => ({ type: 'binary', op: '&&', values: d[0].map(b => b[0]).concat(d[1]) })
     %}
 
 expressionFactor -> 
     predicate {% id %}
-  | "not"i __ predicate {% d => ({ type: 'not', value: d[2] }) %}
+  | "not"i __ predicate {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
 
 predicate ->
     rowValue _ compareOp _ rowValue {%
@@ -62,58 +62,64 @@ predicate ->
 
 compareOp -> [<>=] | "<>" | "<=" | ">=" | "!="
 
-expression -> shiftExpr {% id %}
-
 shiftExpr ->
     addExpr {% id %}
-  | (addExpr _ ("<<"|">>") _):+ addExpr {%
+  | shiftExpr _ ("<<"|">>") _ addExpr {%
       d => ({
-        type: 'shift',
-        ops: d[0].map(v => v[2] === '<<' ? 'up' : 'down'),
-        values: d[0].map(v => v[1]).concat(d[1]),
+        type: 'binary',
+        op: d[2][0],
+        left: d[0],
+        right: d[4],
       })
     %}
 
 addExpr -> 
     mulExpr {% id %}
-  | (mulExpr _ [+\-] _):+ mulExpr {%
+  | addExpr _ [+\-] _ mulExpr {%
       d => ({
-        type: 'add',
-        ops: d[0].map(v => v[2] === '+' ? 'add' : 'subtract'),
-        values: d[0].map(v => v[1]).concat(d[1]),
+        type: 'binary',
+        op: d[2],
+        left: d[0],
+        right: d[4],
       })
     %}
 
 mulExpr ->
     xorExpr {% id %}
-  | (xorExpr _ mulKeyword _):+ xorExpr {%
+  | mulExpr _ mulKeyword _ xorExpr {%
       d => ({
-        type: 'multiply',
-        ops: d[0].map(v => v[2]),
-        values: d[0].map(v => v[1]).concat(d[1]),
+        type: 'binary',
+        op: d[2],
+        left: d[0],
+        right: d[4],
       })
     %}
 
 mulKeyword ->
-    ("MUL" | "*") {% () => "multiply" %}
-  | ("DIV" | "/") {% () => "divide" %}
-  | "%" {% () => "mod" %}
+    ("MUL" | "*") {% () => "*" %}
+  | ("DIV" | "/") {% () => "/" %}
+  | "%" {% () => "%" %}
 
 xorExpr ->
     valueExpr {% id %}
-  | (valueExpr _ "^" _):+ valueExpr {%
-      d => ({ type: 'xor', values: d[0].map(b => b[0]).concat(d[1]) })
+  | xorExpr _ "^" _ valueExpr {%
+      d => ({
+        type: 'binary',
+        op: '^',
+        left: d[0],
+        right: d[4],
+      })
     %}
 
 valueExpr -> 
     invertExpr {% id %}
   | "+" _ invertExpr {% d => d[2] %}
-  | "-" _ invertExpr {% d => ({ type: 'negate', value: d[2] }) %}
+  | "-" _ invertExpr {% d => ({ type: 'unary', op: '-', value: d[2] }) %}
 
 invertExpr ->
     primaryExpr {% id %}
-  | "!" _ primaryExpr {% d => ({ type: 'not', value: d[2] }) %}
-  | "~" _ primaryExpr {% d => ({ type: 'bitwiseNot', value: d[2] }) %}
+  | "!" _ primaryExpr {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
+  | "~" _ primaryExpr {% d => ({ type: 'unary', op: '~', value: d[2] }) %}
 
 primaryExpr ->
     number {% id %}
