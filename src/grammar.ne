@@ -55,8 +55,12 @@ predicate ->
     rowValue _ compareOp _ rowValue {%
       d => ({ type: 'compare', op: d[2][0], left: d[0], right: d[4] })
     %}
-  | rowValue __ ("not"i __):? "in"i __ rowValueList
-  | rowValue __ "is"i __ ("not"i __):? rowValue
+  | rowValue __ ("not"i __):? "in"i __ rowValueList {%
+      d => ({ type: 'in', left: d[0], right: d[5] })
+    %}
+  | rowValue __ "is"i __ ("not"i __):? rowValue {%
+      d => ({ type: 'is', left: d[0], right: d[5] })
+    %}
   | rowValue __ ("not"i __):? "like"i __ primaryExpr
   | rowValue __ ("not"i __):? "between"i __ rowValue __ "and"i __ rowValue
 
