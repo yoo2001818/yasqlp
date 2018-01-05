@@ -51,35 +51,33 @@ expressionFactor ->
     predicate {% id %}
   | "not"i __ predicate {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
 
+@{%
+  function wrapNot(perform, block) {
+    if (!perform) return block;
+    return { type: 'unary', op: '!', value: block };
+  }
+%}
+
 predicate ->
     rowValue _ compareOp _ rowValue {%
       d => ({ type: 'compare', op: d[2][0], left: d[0], right: d[4] })
     %}
-  | rowValue __ "not"i __ "in"i __ rowValueList {%
-      d => ({
-        type: 'unary', op: '!', value: { type: 'in', left: d[0], right: d[6] }
-      })
+  | rowValue __ ("not"i __):? "in"i __ rowValueList {%
+      d => wrapNot(d[2],
+        { type: 'in', target: d[0], values: d[5] })
     %}
-  | rowValue __ "in"i __ rowValueList {%
-      d => ({ type: 'in', left: d[0], right: d[4] })
+  | rowValue __ "is"i __ ("not"i __):? rowValue {%
+      d => wrapNot(d[2],
+        { type: 'compare', op: 'is', left: d[0], right: d[5] })
     %}
-  | rowValue __ "is"i __ "not"i __ rowValue {%
-      d => ({
-        type: 'unary', op: '!', value: { type: 'is', left: d[0], right: d[6] }
-      })
+  | rowValue __ ("not"i __):? "like"i __ primaryExpr {%
+      d => wrapNot(d[2],
+        { type: 'compare', op: 'like', left: d[0], right: d[5] })
     %}
-  | rowValue __ "is"i __ rowValue {%
-      d => ({ type: 'is', left: d[0], right: d[4] })
+  | rowValue __ ("not"i __):? "between"i __ rowValue __ "and"i __ rowValue {%
+      d => wrapNot(d[2],
+        { type: 'between', target: d[0], min: d[5], max: d[9] })
     %}
-  | rowValue __ "not"i __ "like"i __ primaryExpr {%
-      d => ({
-        type: 'unary', op: '!', value: { type: 'like', left: d[0], right: d[6] }
-      })
-    %}
-  | rowValue __ "like"i __ primaryExpr {%
-      d => ({ type: 'like', left: d[0], right: d[4] })
-    %}
-  | rowValue __ ("not"i __):? "between"i __ rowValue __ "and"i __ rowValue
 
 compareOp -> [<>=] | "<>" | "<=" | ">=" | "!="
 
