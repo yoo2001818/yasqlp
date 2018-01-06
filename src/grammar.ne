@@ -146,13 +146,25 @@ primaryExpr ->
   | column {% id %}
   | subquery {% id %}
   | "*" {% () => ({ type: 'wildcard', table: null }) %}
-  | aggrExpression {% id %}
+  | funcExpression {% id %}
   | "(" _ expression _ ")" {% d => d[1] %}
   | caseExpression {% id %}
 
 subquery -> "(" _ selectStatement _ ")" {% d => d[2] %}
 
-aggrExpression -> keyword _ "(" _ (aggrQualifier __):? expression _ ")"
+funcExpression -> keyword _ "(" _ funcArgs _ ")" {%
+    d => ({
+      type: 'function',
+      name: d[0],
+      args: d[4],
+    })
+  %}
+
+funcArgs ->
+  | _ {% d => [] %}
+    expression (_ "," _ expression):* {%
+      d => [d[0]].concat(d[1].map(v => v[3]))
+    %}
 
 aggrQualifier -> "distinct"i {% id %} | "all"i {% id %}
 
