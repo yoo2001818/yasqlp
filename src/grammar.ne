@@ -7,14 +7,16 @@ statement ->
 
 selectStatement -> "select"i __ selectList (__ "from"i __ selectTables):? (__ "where"i __ expression):?
 
-selectList -> selectEntry _ ("," _ selectEntry):*
+selectList -> selectEntry (_ "," _ selectEntry):* {%
+    d => [d[0]].concat(d[1].map(v => v[3]))
+  %}
 
 selectEntry ->
-    rowValue
-  | rowValue __ "as"i __ keyword
+    rowValue {% d => ({ name: null, value: d[0] }) %}
+  | rowValue __ "as"i __ keyword {% d => ({ name: d[4], value: d[0] }) %}
 
 selectTables ->
-    table _ ("," _ table):*
+    table (_ "," _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
 
 table ->
     keyword (__ "as"i __ keyword):? {%
@@ -23,15 +25,6 @@ table ->
   | subquery (__ "as"i __ keyword):? {%
       d => ({ name: d[1] ? d[1][3] : null, value: d[0] })
     %}
-
-rowValueList ->
-    "(" _ rowValue (_ "," _ rowValue):* _ ")"
-  | subquery
-
-rowValue ->
-    "null"i
-  | "default"i
-  | shiftExpr {% id %}
 
 expression -> expressionOr {% id %}
 
@@ -78,6 +71,18 @@ predicate ->
       d => wrapNot(d[2],
         { type: 'between', target: d[0], min: d[5], max: d[9] })
     %}
+
+rowValueList ->
+    "(" _ rowValue (_ "," _ rowValue):* _ ")"  {% d => ({
+      type: 'list',
+      values: [d[2]].concat(d[3].map(v => v[3])),
+    }) %}
+  | subquery {% id %}
+
+rowValue ->
+    "null"i {% d => ({ type: 'null' }) %}
+  | "default"i {% d => ({ type: 'default' }) %}
+  | shiftExpr {% id %}
 
 compareOp -> [<>=] | "<>" | "<=" | ">=" | "!="
 
@@ -161,8 +166,8 @@ funcExpression -> keyword _ "(" _ funcArgs _ ")" {%
   %}
 
 funcArgs ->
-  | _ {% d => [] %}
-    expression (_ "," _ expression):* {%
+    _ {% d => [] %}
+  | expression (_ "," _ expression):* {%
       d => [d[0]].concat(d[1].map(v => v[3]))
     %}
 
