@@ -171,7 +171,24 @@ funcArgs ->
       d => [d[0]].concat(d[1].map(v => v[3]))
     %}
 
-aggrQualifier -> "distinct"i {% id %} | "all"i {% id %}
+aggrExpression -> aggrFunction _ "(" _ aggrQualifier _ expression _ ")" {%
+    d => ({
+      type: 'aggregate',
+      op: d[0][0],
+      qualifier: d[4],
+      value: d[6],
+    })
+  %}
+
+aggrFunction -> "avg"i | "bit_and"i | "bit_or"i | "bit_xor"i
+  | "count"i | "group_concat"i | "max"i | "min"i |
+  | ("std"i | "stddev"i | "stddev_pop"i) {% () => ['stddev'] %}
+  | "stddev_samp"i
+  | "sum"i
+  | ("var_pop"i | "variance"i) {% () => ['variance'] %}
+  | "var_samp"i
+
+aggrQualifier -> _ {% nuller %} | "distinct"i {% id %} | "all"i {% id %}
 
 caseExpression ->
     "case"i __ expression __ (caseExprCase __):+ ("else" __ expression __):? "end"i
