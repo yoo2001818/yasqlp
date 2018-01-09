@@ -11,9 +11,14 @@ selectList -> selectEntry (_ "," _ selectEntry):* {%
     d => [d[0]].concat(d[1].map(v => v[3]))
   %}
 
-selectEntry ->
-    rowValue {% d => ({ name: null, value: d[0] }) %}
-  | rowValue __ "as"i __ keyword {% d => ({ name: d[4], value: d[0] }) %}
+selectEntry -> 
+  (aggrQualifier __):? rowValue ((__ "as"i __):? keyword):? {%
+    d => ({
+      qualifier: d[0] && d[0][0],
+      name: d[2] && d[2][1],
+      value: d[1],
+    })
+  %}
 
 selectTables ->
     table (_ "," _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
@@ -181,14 +186,14 @@ aggrExpression -> aggrFunction _ "(" _ aggrQualifier _ expression _ ")" {%
   %}
 
 aggrFunction -> "avg"i | "bit_and"i | "bit_or"i | "bit_xor"i
-  | "count"i | "group_concat"i | "max"i | "min"i |
+  | "count"i | "group_concat"i | "max"i | "min"i
   | ("std"i | "stddev"i | "stddev_pop"i) {% () => ['stddev'] %}
   | "stddev_samp"i
   | "sum"i
   | ("var_pop"i | "variance"i) {% () => ['variance'] %}
   | "var_samp"i
 
-aggrQualifier -> _ {% nuller %} | "distinct"i {% id %} | "all"i {% id %}
+aggrQualifier -> _ {% () => null %} | "distinct"i {% id %} | "all"i {% id %}
 
 caseExpression ->
     "case"i __ expression __ (caseExprCase __):+ ("else" __ expression __):? "end"i
