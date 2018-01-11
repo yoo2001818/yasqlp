@@ -12,10 +12,10 @@ selectList -> selectEntry (_ "," _ selectEntry):* {%
   %}
 
 selectEntry -> 
-  (aggrQualifier __):? rowValue ((__ "as"i __):? keyword):? {%
+  (aggrQualifier __):? rowValue ((__ "as"i):? __ keyword):? {%
     d => ({
       qualifier: d[0] && d[0][0],
-      name: d[2] && d[2][1],
+      name: d[2] && d[2][2],
       value: d[1],
     })
   %}
@@ -24,11 +24,11 @@ selectTables ->
     table (_ "," _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
 
 table ->
-    keyword (__ "as"i __ keyword):? {%
-      d => ({ name: d[1] ? d[1][3] : null, value: d[0] })
+    keyword ((__ "as"i):? __ keyword):? {%
+      d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
-  | subquery (__ "as"i __ keyword):? {%
-      d => ({ name: d[1] ? d[1][3] : null, value: d[0] })
+  | subquery ((__ "as"i):? __ keyword):? {%
+      d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
 
 expression -> expressionOr {% id %}
@@ -76,6 +76,7 @@ predicate ->
       d => wrapNot(d[2],
         { type: 'between', target: d[0], min: d[5], max: d[9] })
     %}
+  | rowValue {% id %}
 
 rowValueList ->
     "(" _ rowValue (_ "," _ rowValue):* _ ")"  {% d => ({
@@ -162,11 +163,12 @@ primaryExpr ->
 
 subquery -> "(" _ selectStatement _ ")" {% d => d[2] %}
 
-funcExpression -> keyword _ "(" _ funcArgs _ ")" {%
+funcExpression -> keyword _ "(" _ aggrQualifier _ funcArgs _ ")" {%
     d => ({
       type: 'function',
       name: d[0],
-      args: d[4],
+      qualifier: d[4],
+      args: d[6],
     })
   %}
 
@@ -176,35 +178,18 @@ funcArgs ->
       d => [d[0]].concat(d[1].map(v => v[3]))
     %}
 
-aggrExpression -> aggrFunction _ "(" _ aggrQualifier _ expression _ ")" {%
-    d => ({
-      type: 'aggregate',
-      op: d[0][0],
-      qualifier: d[4],
-      value: d[6],
-    })
-  %}
-
-aggrFunction -> "avg"i | "bit_and"i | "bit_or"i | "bit_xor"i
-  | "count"i | "group_concat"i | "max"i | "min"i
-  | ("std"i | "stddev"i | "stddev_pop"i) {% () => ['stddev'] %}
-  | "stddev_samp"i
-  | "sum"i
-  | ("var_pop"i | "variance"i) {% () => ['variance'] %}
-  | "var_samp"i
-
 aggrQualifier -> _ {% () => null %} | "distinct"i {% id %} | "all"i {% id %}
 
 caseExpression ->
-    "case"i __ expression __ (caseExprCase __):+ ("else" __ expression __):? "end"i {%
+    "case"i __ expression __ (caseExprCase __):+ ("else"i __ expression __):? "end"i {%
       d => ({
         type: 'case',
-        value: d[2]
+        value: d[2],
         matches: d[4].map(v => v[0]),
         else: d[5] && d[5][2],
       })
     %}
-    "case"i __ (caseExprCase __):+ ("else" __ expression __):? "end"i {%
+  | "case"i __ (caseExprCase __):+ ("else" __ expression __):? "end"i {%
       d => ({
         type: 'case',
         matches: d[2].map(v => v[0]),

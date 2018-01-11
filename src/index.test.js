@@ -20,4 +20,8 @@ describe('parser', () => {
       }, */
     ]);
   });
+  it('should parse aggregation', () => {
+    parser.feed('SELECT SUM(*) FROM b;');
+    expect(parser.results).toEqual([]);
+  });
 });
