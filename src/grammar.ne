@@ -196,10 +196,25 @@ aggrFunction -> "avg"i | "bit_and"i | "bit_or"i | "bit_xor"i
 aggrQualifier -> _ {% () => null %} | "distinct"i {% id %} | "all"i {% id %}
 
 caseExpression ->
-    "case"i __ expression __ (caseExprCase __):+ ("else" __ expression __):? "end"i
-    "case"i __ (caseExprCase __):+ ("else" __ expression __):? "end"i
+    "case"i __ expression __ (caseExprCase __):+ ("else" __ expression __):? "end"i {%
+      d => ({
+        type: 'case',
+        value: d[2]
+        matches: d[4].map(v => v[0]),
+        else: d[5] && d[5][2],
+      })
+    %}
+    "case"i __ (caseExprCase __):+ ("else" __ expression __):? "end"i {%
+      d => ({
+        type: 'case',
+        matches: d[2].map(v => v[0]),
+        else: d[3] && d[3][2],
+      })
+    %}
 
-caseExprCase -> "when"i __ expression __ "then"i __ expression
+caseExprCase -> "when"i __ expression __ "then"i __ expression {%
+    d => ({ query: d[2], value: d[6] })
+  %}
 
 column ->
     keyword {% d => ({ type: 'column', table: null, name: d[0] }) %}
