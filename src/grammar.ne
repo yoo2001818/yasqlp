@@ -12,9 +12,9 @@ selectList -> selectEntry (_ "," _ selectEntry):* {%
   %}
 
 selectEntry -> 
-  (aggrQualifier __):? rowValue ((__ "as"i):? __ keyword):? {%
+  (aggrQualifier __):? expression ((__ "as"i):? __ keyword):? {%
     d => ({
-      qualifier: d[0] && d[0][0],
+      qualifier: d[0] && d[0][0], 
       name: d[2] && d[2][2],
       value: d[1],
     })
@@ -163,12 +163,12 @@ primaryExpr ->
 
 subquery -> "(" _ selectStatement _ ")" {% d => d[2] %}
 
-funcExpression -> keyword _ "(" _ aggrQualifier _ funcArgs _ ")" {%
+funcExpression -> keyword _ "(" _ (aggrQualifier __):? funcArgs _ ")" {%
     d => ({
       type: 'function',
       name: d[0],
-      qualifier: d[4],
-      args: d[6],
+      qualifier: d[4] && d[4][0],
+      args: d[5],
     })
   %}
 
@@ -178,7 +178,7 @@ funcArgs ->
       d => [d[0]].concat(d[1].map(v => v[3]))
     %}
 
-aggrQualifier -> _ {% () => null %} | "distinct"i {% id %} | "all"i {% id %}
+aggrQualifier -> "distinct"i {% id %} | "all"i {% id %}
 
 caseExpression ->
     "case"i __ expression __ (caseExprCase __):+ ("else"i __ expression __):? "end"i {%
