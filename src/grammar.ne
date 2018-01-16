@@ -1,5 +1,21 @@
-@builtin "whitespace.ne"
-@builtin "number.ne"
+@{%
+const moo = require('moo');
+
+const lexer = moo.compile({
+  ws: /\s+/,
+  string: /'([^']|\\')+'/,
+  number: /[-+]?[0-9]+(\.[0-9]+)/,
+  keyword: /[a-zA-Z0-9][a-zA-Z0-9_]*/,
+  comma: /,/,
+  period: /\./,
+  multiply: /\*/,
+  divide: /\//,
+  add: /\+/,
+  subtract: /-/,
+});
+%}
+
+@lexer lexer
 
 main -> (statement ";"):+ {% id %}
 statement ->
