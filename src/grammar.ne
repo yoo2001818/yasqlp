@@ -2,6 +2,7 @@
 const moo = require('moo');
 
 const lexer = moo.compile({
+  newline: { match: /\n/, lineBreaks: true },
   ws: /\s+/,
   string: /'([^']|\\')+'/,
   number: /[-+]?[0-9]+(\.[0-9]+)/,
@@ -15,18 +16,23 @@ const lexer = moo.compile({
   not: /not/i,
   like: /like/i,
   is: /is/i,
+  kwdIn: /in/i,
   distinct: /distinct/i,
+  all: /all/i,
   null: /null/i,
+  kwdDefault: /default/i,
   between: /between/i,
-  case: /case/i,
+  kwdCase: /case/i,
   when: /when/i,
   then: /then/i,
-  else: /else/i,
+  kwdElse: /else/i,
   end: /end/i,
   mul: /mul/i,
   div: /div/i,
   bang: /!/,
   tilde: /~/,
+  shiftUp: /<</,
+  shiftDown: />>/,
   ne: /!=|<>/,
   eq: /==/,
   lte: /<=/,
@@ -41,23 +47,26 @@ const lexer = moo.compile({
   plus: /\+/,
   minus: /-/,
   caret: /^/,
+  semicolon: /;/,
+  parenOpen: /\(/,
+  parenClose: /\)/,
 });
 %}
 
 @lexer lexer
 
-main -> (statement ";"):+ {% id %}
+main -> (statement %semicolon):+ {% id %}
 statement ->
   selectStatement
 
-selectStatement -> "select"i __ selectList (__ "from"i __ selectTables):? (__ "where"i __ expression):?
+selectStatement -> %select __ selectList (__ %from __ selectTables):? (__ %where __ expression):?
 
-selectList -> selectEntry (_ "," _ selectEntry):* {%
+selectList -> selectEntry (_ %comma _ selectEntry):* {%
     d => [d[0]].concat(d[1].map(v => v[3]))
   %}
 
 selectEntry -> 
-  (aggrQualifier __):? expression ((__ "as"i):? __ keyword):? {%
+  (aggrQualifier __):? expression ((__ %as):? __ keyword):? {%
     d => ({
       qualifier: d[0] && d[0][0], 
       name: d[2] && d[2][2],
@@ -66,13 +75,13 @@ selectEntry ->
   %}
 
 selectTables ->
-    table (_ "," _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
+    table (_ %comma _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
 
 table ->
-    keyword ((__ "as"i):? __ keyword):? {%
+    keyword ((__ %as):? __ keyword):? {%
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
-  | subquery ((__ "as"i):? __ keyword):? {%
+  | subquery ((__ %as):? __ keyword):? {%
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
 
@@ -80,19 +89,19 @@ expression -> expressionOr {% id %}
 
 expressionOr ->
     expressionAnd {% id %}
-  | (expressionAnd __ ("or"i | "||") __):+ expressionAnd {%
+  | (expressionAnd __ %or __):+ expressionAnd {%
       d => ({ type: 'binary', op: '||', values: d[0].map(b => b[0]).concat(d[1]) })
     %}
 
 expressionAnd ->
     expressionFactor {% id %}
-  | (expressionFactor __ ("and"i | "&&") __):+ expressionFactor {%
+  | (expressionFactor __ %and __):+ expressionFactor {%
       d => ({ type: 'binary', op: '&&', values: d[0].map(b => b[0]).concat(d[1]) })
     %}
 
 expressionFactor -> 
     predicate {% id %}
-  | "not"i __ predicate {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
+  | %not __ predicate {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
 
 @{%
   function wrapNot(perform, block) {
@@ -105,41 +114,41 @@ predicate ->
     rowValue _ compareOp _ rowValue {%
       d => ({ type: 'compare', op: d[2][0], left: d[0], right: d[4] })
     %}
-  | rowValue __ ("not"i __):? "in"i __ rowValueList {%
+  | rowValue __ (%not __):? %kwdIn __ rowValueList {%
       d => wrapNot(d[2],
         { type: 'in', target: d[0], values: d[5] })
     %}
-  | rowValue __ "is"i __ ("not"i __):? rowValue {%
+  | rowValue __ %is __ (%not  __):? rowValue {%
       d => wrapNot(d[2],
         { type: 'compare', op: 'is', left: d[0], right: d[5] })
     %}
-  | rowValue __ ("not"i __):? "like"i __ primaryExpr {%
+  | rowValue __ (%not __):? %like __ primaryExpr {%
       d => wrapNot(d[2],
         { type: 'compare', op: 'like', left: d[0], right: d[5] })
     %}
-  | rowValue __ ("not"i __):? "between"i __ rowValue __ "and"i __ rowValue {%
+  | rowValue __ (%not __):? %between __ rowValue __ %and __ rowValue {%
       d => wrapNot(d[2],
         { type: 'between', target: d[0], min: d[5], max: d[9] })
     %}
   | rowValue {% id %}
 
 rowValueList ->
-    "(" _ rowValue (_ "," _ rowValue):* _ ")"  {% d => ({
+    %parenOpen _ rowValue (_ %comma _ rowValue):* _ %parenClose  {% d => ({
       type: 'list',
       values: [d[2]].concat(d[3].map(v => v[3])),
     }) %}
   | subquery {% id %}
 
 rowValue ->
-    "null"i {% d => ({ type: 'null' }) %}
-  | "default"i {% d => ({ type: 'default' }) %}
+    %null {% d => ({ type: 'null' }) %}
+  | %kwdDefault {% d => ({ type: 'default' }) %}
   | shiftExpr {% id %}
 
-compareOp -> [<>=] | "<>" | "<=" | ">=" | "!="
+compareOp -> %ne | %eq | %lte | %lt | %gte | %gt
 
 shiftExpr ->
     addExpr {% id %}
-  | shiftExpr _ ("<<"|">>") _ addExpr {%
+  | shiftExpr _ (%shiftUp | %shiftDown) _ addExpr {%
       d => ({
         type: 'binary',
         op: d[2][0],
@@ -150,7 +159,7 @@ shiftExpr ->
 
 addExpr -> 
     mulExpr {% id %}
-  | addExpr _ [+\-] _ mulExpr {%
+  | addExpr _ (%plus | %minus) _ mulExpr {%
       d => ({
         type: 'binary',
         op: d[2],
@@ -171,13 +180,13 @@ mulExpr ->
     %}
 
 mulKeyword ->
-    ("MUL" | "*") {% () => "*" %}
-  | ("DIV" | "/") {% () => "/" %}
-  | "%" {% () => "%" %}
+    (%mul | %asterisk) {% () => "*" %}
+  | (%div | %slash) {% () => "/" %}
+  | %percent {% () => "%" %}
 
 xorExpr ->
     valueExpr {% id %}
-  | xorExpr _ "^" _ valueExpr {%
+  | xorExpr _ %caret _ valueExpr {%
       d => ({
         type: 'binary',
         op: '^',
@@ -188,27 +197,27 @@ xorExpr ->
 
 valueExpr -> 
     invertExpr {% id %}
-  | "+" _ invertExpr {% d => d[2] %}
-  | "-" _ invertExpr {% d => ({ type: 'unary', op: '-', value: d[2] }) %}
+  | %plus _ invertExpr {% d => d[2] %}
+  | %minus _ invertExpr {% d => ({ type: 'unary', op: '-', value: d[2] }) %}
 
 invertExpr ->
     primaryExpr {% id %}
-  | "!" _ primaryExpr {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
-  | "~" _ primaryExpr {% d => ({ type: 'unary', op: '~', value: d[2] }) %}
+  | %bang _ primaryExpr {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
+  | %tilde _ primaryExpr {% d => ({ type: 'unary', op: '~', value: d[2] }) %}
 
 primaryExpr ->
     number {% id %}
   | string {% id %}
   | column {% id %}
   | subquery {% id %}
-  | "*" {% () => ({ type: 'wildcard', table: null }) %}
+  | %asterisk {% () => ({ type: 'wildcard', table: null }) %}
   | funcExpression {% id %}
-  | "(" _ expression _ ")" {% d => d[1] %}
+  | %parenOpen _ expression _ %parenClose {% d => d[1] %}
   | caseExpression {% id %}
 
-subquery -> "(" _ selectStatement _ ")" {% d => d[2] %}
+subquery -> %parenOpen _ selectStatement _ %parenClose {% d => d[2] %}
 
-funcExpression -> keyword _ "(" _ (aggrQualifier __):? funcArgs _ ")" {%
+funcExpression -> keyword _ %parenOpen _ (aggrQualifier __):? funcArgs _ %parenClose {%
     d => ({
       type: 'function',
       name: d[0],
@@ -223,10 +232,10 @@ funcArgs ->
       d => [d[0]].concat(d[1].map(v => v[3]))
     %}
 
-aggrQualifier -> "distinct"i {% id %} | "all"i {% id %}
+aggrQualifier -> %distinct {% id %} | %all {% id %}
 
 caseExpression ->
-    "case"i __ expression __ (caseExprCase __):+ ("else"i __ expression __):? "end"i {%
+    %kwdCase __ expression __ (caseExprCase __):+ (%kwdElse __ expression __):? %end {%
       d => ({
         type: 'case',
         value: d[2],
@@ -234,7 +243,7 @@ caseExpression ->
         else: d[5] && d[5][2],
       })
     %}
-  | "case"i __ (caseExprCase __):+ ("else" __ expression __):? "end"i {%
+  | %kwdCase __ (caseExprCase __):+ (%kwdElse __ expression __):? %end {%
       d => ({
         type: 'case',
         matches: d[2].map(v => v[0]),
@@ -242,15 +251,18 @@ caseExpression ->
       })
     %}
 
-caseExprCase -> "when"i __ expression __ "then"i __ expression {%
+caseExprCase -> %when __ expression __ %then __ expression {%
     d => ({ query: d[2], value: d[6] })
   %}
 
 column ->
     keyword {% d => ({ type: 'column', table: null, name: d[0] }) %}
-  | keyword "." keyword {% d => ({ type: 'column', table: d[0], name: d[2] }) %}
-  | keyword ".*" {% d => ({ type: 'wildcard', table: d[0] }) %}
+  | keyword %period keyword {% d => ({ type: 'column', table: d[0], name: d[2] }) %}
+  | keyword %period %asterisk {% d => ({ type: 'wildcard', table: d[0] }) %}
 
-number -> decimal {% d => ({ type: 'number', value: d[0] }) %}
-string -> "'" .:* "'" {% d => ({ type: 'string', value: d[1] }) %}
-keyword -> [a-zA-Z_] [a-zA-Z_0-9]:* {% d => d[0] + d[1].join('') %}
+number -> %number {% d => ({ type: 'number', value: d[0] }) %}
+string -> %string {% d => ({ type: 'string', value: d[1] }) %}
+keyword -> %keyword {% d => d[0] + d[1].join('') %}
+
+_ -> (__):?
+__ -> %ws
