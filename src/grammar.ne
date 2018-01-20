@@ -117,7 +117,7 @@ expressionFactor ->
 
 predicate ->
     rowValue _ compareOp _ rowValue {%
-      d => ({ type: 'compare', op: d[2][0], left: d[0], right: d[4] })
+      d => ({ type: 'compare', op: d[2][0].value, left: d[0], right: d[4] })
     %}
   | rowValue __ (%kwdNot __):? %kwdIn __ rowValueList {%
       d => wrapNot(d[2],
@@ -156,7 +156,7 @@ shiftExpr ->
   | shiftExpr _ (%shiftUp | %shiftDown) _ addExpr {%
       d => ({
         type: 'binary',
-        op: d[2][0],
+        op: d[2][0].value,
         left: d[0],
         right: d[4],
       })
@@ -167,7 +167,7 @@ addExpr ->
   | addExpr _ (%plus | %minus) _ mulExpr {%
       d => ({
         type: 'binary',
-        op: d[2],
+        op: d[2][0].value,
         left: d[0],
         right: d[4],
       })
