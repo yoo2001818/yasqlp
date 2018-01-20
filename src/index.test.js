@@ -8,7 +8,7 @@ describe('parser', () => {
   });
   it('should parse basic SQL', () => {
     parser.feed('select a.b from a where c = 5 and b = 9 + 1 + 2 + 3 and c between 1 and 5;');
-    expect(parser.results).toEqual([
+    expect(parser.results[0]).toEqual([
       /* {
         type: 'select',
         columns: [{ type: 'column', table: 'a', name: 'b' }],

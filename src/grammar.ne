@@ -60,11 +60,19 @@ const lexer = moo.compile({
 
 @lexer lexer
 
-main -> (statement %semicolon):+ {% id %}
+main -> (statement %semicolon):+ {% d => d[0].map(v => v[0]) %}
 statement ->
-  selectStatement
+  selectStatement {% id %}
 
 selectStatement -> %kwdSelect __ selectList (__ %kwdFrom __ selectTables):? (__ %kwdWhere __ expression):?
+  {%
+    d => ({
+      type: 'select',
+      columns: d[2],
+      from: d[3] && d[3][3],
+      where: d[4] && d[4][3],
+    })
+  %}
 
 selectList -> selectEntry (_ %comma _ selectEntry):* {%
     d => [d[0]].concat(d[1].map(v => v[3]))
