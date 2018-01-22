@@ -3,10 +3,10 @@ const moo = require('moo');
 
 const lexer = moo.compile({
   ws: { match: /[\n\t ]+/, lineBreaks: true },
-  string: /'(?:[^']|\\')+'/,
-  number: /[-+]?[0-9]+(?:\.[0-9]+)/,
+  string: /'(?:[^']|'')+'/,
+  number: /[-+]?[0-9]+(?:\.[0-9]+)?/,
   keyword: {
-    match: /(?:[a-zA-Z0-9][a-zA-Z0-9_]*)|`(?:[^`]+)`/,
+    match: /(?:[a-zA-Z_][a-zA-Z0-9_]*)|`(?:[^`]+)`/,
     keywords: {
       kwdSelect: 'select',
       kwdFrom: 'from',
@@ -275,9 +275,25 @@ column ->
   | keyword %period keyword {% d => ({ type: 'column', table: d[0], name: d[2] }) %}
   | keyword %period %asterisk {% d => ({ type: 'wildcard', table: d[0] }) %}
 
-number -> %number {% d => ({ type: 'number', value: d[0].value }) %}
-string -> %string {% d => ({ type: 'string', value: d[1].value }) %}
-keyword -> %keyword {% d => d[0].value %}
+@{%
+  function parseNumber(kwd) {
+    return parseFloat(kwd.value);
+  }
+  function parseString(kwd) {
+    let matched = /^'(.+)'$/.exec(kwd.value);
+    if (matched == null) return kwd.value;
+    return matched[1].replace(/''/g, '\'');
+  }
+  function parseKeyword(kwd) {
+    let matched = /^`(.+)`$/.exec(kwd.value);
+    if (matched == null) return kwd.value;
+    return matched[1];
+  }
+%}
+
+number -> %number {% d => ({ type: 'number', value: parseNumber(d[0]) }) %}
+string -> %string {% d => ({ type: 'string', value: parseString(d[0]) }) %}
+keyword -> %keyword {% d => parseKeyword(d[0]) %}
 
 _ -> (__):?
 __ -> %ws

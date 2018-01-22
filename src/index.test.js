@@ -20,6 +20,11 @@ describe('parser', () => {
       }, */
     ]);
   });
+  it('should parse strings', () => {
+    parser.feed('select * from `test` where c = \'Hello, it\'\'s me\';');
+    expect(parser.results[0]).toEqual([
+    ]);
+  });
   it('should parse aggregation', () => {
     parser.feed('SELECT SUM(*) FROM b;');
     expect(parser.results).toEqual([]);
