@@ -21,7 +21,12 @@ describe('parser', () => {
     ]);
   });
   it('should parse strings', () => {
-    parser.feed('select * from `test` where c = \'Hello, it\'\'s me\';');
+    parser.feed('select * from `test` where c = \'Hello, it\'\'s me\nyes!\';');
+    expect(parser.results[0]).toEqual([
+    ]);
+  });
+  it('should parse comments', () => {
+    parser.feed('select * -- How about no/*\n from `test` /* or\n /*/ where c = \'Hello, it\'\'s me\nyes!\';');
     expect(parser.results[0]).toEqual([
     ]);
   });

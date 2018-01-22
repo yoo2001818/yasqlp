@@ -2,11 +2,15 @@
 const moo = require('moo');
 
 const lexer = moo.compile({
-  ws: { match: /[\n\t ]+/, lineBreaks: true },
-  string: /'(?:[^']|'')+'/,
+  ws: [
+    { match: /[\n\t ]+/, lineBreaks: true },
+    { match: /--.*$/ },
+    { match: /\/\*(?:.|\s)*?\*\//, lineBreaks: true },
+  ],
+  string: { match: /'(?:[^']|'')+'/, lineBreaks: true },
   number: /[-+]?[0-9]+(?:\.[0-9]+)?/,
   keyword: {
-    match: /(?:[a-zA-Z_][a-zA-Z0-9_]*)|`(?:[^`]+)`/,
+    match: /(?:[a-zA-Z_][a-zA-Z0-9_]*)|`(?:[^`\s]+)`/,
     keywords: {
       kwdSelect: 'select',
       kwdFrom: 'from',
@@ -296,4 +300,4 @@ string -> %string {% d => ({ type: 'string', value: parseString(d[0]) }) %}
 keyword -> %keyword {% d => parseKeyword(d[0]) %}
 
 _ -> (__):?
-__ -> %ws
+__ -> (%ws):+
