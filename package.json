@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/yoo2001818/yasqlp#readme",
   "dependencies": {
-    "moo": "^0.4.3",
+    "moo": "git+https://github.com/camullen/moo.git#dcc5aba2ed2236909a229db16a18e18f0726bb8b",
     "nearley": "^2.11.0"
   },
   "devDependencies": {

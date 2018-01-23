@@ -11,6 +11,7 @@ const lexer = moo.compile({
   number: /[-+]?[0-9]+(?:\.[0-9]+)?/,
   keyword: {
     match: /(?:[a-zA-Z_][a-zA-Z0-9_]*)|`(?:[^`\s]+)`/,
+    keywordsCaseInsensitive: true,
     keywords: {
       kwdSelect: 'select',
       kwdFrom: 'from',
