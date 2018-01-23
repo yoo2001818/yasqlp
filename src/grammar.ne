@@ -281,7 +281,7 @@ column ->
 
 @{%
   function parseNumber(kwd) {
-    return parseFloat(kwd.value);
+    return parseFloat(kwd.value) || 0;
   }
   function parseString(kwd) {
     let matched = /^'(.+)'$/.exec(kwd.value);
