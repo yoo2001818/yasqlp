@@ -91,7 +91,7 @@ statement ->
   selectStatement {% id %}
 
 selectStatement -> %kwdSelect __ selectList
-  (__ %kwdFrom __ selectFrom):?
+  (__ %kwdFrom __ tableList):?
   (__ %kwdWhere __ expression):?
   {%
     d => ({
@@ -101,8 +101,6 @@ selectStatement -> %kwdSelect __ selectList
       where: d[4] && d[4][3],
     })
   %}
-
-selectFrom -> %kwdFrom __ selectTables {% d => d[2] %}
 
 selectList -> selectEntry (_ %comma _ selectEntry):* {%
     d => [d[0]].concat(d[1].map(v => v[3]))
@@ -117,10 +115,17 @@ selectEntry ->
     })
   %}
 
-selectTables ->
+tableList ->
     table (_ %comma _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
 
-table ->
+table -> tableRef (__ tableJoin):*
+
+tableJoin ->
+    (%kwdInner | %kwdCross) __ %kwdJoin __ tableRef (__ joinCondition):?
+  | %kwdStraightJoin __ tableRef
+  | %kwdStraightJoin __ tableRef __ %kwdOn __ expression
+
+tableRef ->
     keyword ((__ %kwdAs):? __ keyword):? {%
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
