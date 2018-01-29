@@ -7,18 +7,16 @@ describe('parser', () => {
     parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
   });
   it('should parse basic SQL', () => {
-    parser.feed('select a.b from a where c = 5 and b = 9 + 1 + 2 + 3 and c between 1 and 5;');
-    expect(parser.results[0]).toEqual([
-      /* {
-        type: 'select',
-        columns: [{ type: 'column', table: 'a', name: 'b' }],
-        tables: ['a'],
-        where: [
-          { op: '=', left: ['c'], right: { value: 5 } },
-          { op: '=', left: ['b'], right: { value: 9 } },
-        ],
-      }, */
-    ]);
+    parser.feed('SELECT a FROM a;');
+    expect(parser.results[0]).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'column', table: null, name: 'a' },
+      }],
+      from: [{ name: null, value: 'a' }],
+    }]);
   });
   it('should parse strings', () => {
     parser.feed('select * from `test` where c = \'Hello, it\'\'s me\nyes!\';');

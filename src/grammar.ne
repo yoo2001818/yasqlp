@@ -124,8 +124,8 @@ tableJoin ->
     (%kwdInner | %kwdCross):? __ %kwdJoin __ tableRef (__ joinCondition):?
   | %kwdStraightJoin __ tableRef
   | %kwdStraightJoin __ tableRef __ %kwdOn __ expression
-  | (%kwdLeft | $kwdRight) (__ %kwdOuter):? __ %kwdJoin __ tableRef __ joinCondition
-  | %kwdNatural (__ (%kwdLeft | $kwdRight) (__ %kwdOuter):?):? __ %kwdJoin __ tableRef
+  | (%kwdLeft | %kwdRight) (__ %kwdOuter):? __ %kwdJoin __ tableRef __ joinCondition
+  | %kwdNatural (__ (%kwdLeft | %kwdRight) (__ %kwdOuter):?):? __ %kwdJoin __ tableRef
 
 joinCondition ->
     %kwdOn __ expression
