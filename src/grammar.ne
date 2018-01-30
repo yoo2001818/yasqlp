@@ -96,7 +96,7 @@ selectStatement -> %kwdSelect __ selectList
     d => ({
       type: 'select',
       columns: d[2],
-      from: d[3],
+      from: d[3] && d[3][3],
       where: d[4] && d[4][3],
     })
   %}
@@ -122,17 +122,13 @@ tableList ->
 table -> tableRef (__ tableJoin):* {%
     d => {
       let backRef = d[0];
-      return [{ type: normal, table: d[0] }].concat(
+      return [{ type: 'normal', table: d[0] }].concat(
         d[1] && d[1].map(v => {
           let output = Object.assign({}, v[1], { ref: backRef });
           backRef = output.table.name || output.table.value;
           return output;
         }));
     }
-    ([{
-      type: 'normal',
-      table: d[0],
-    }].concat(d[1].map((v, i) => )
   %}
 
 tableJoin ->
@@ -177,7 +173,7 @@ joinDirection ->
   | %kwdRight {% () => 'right' %}
 
 joinCondition ->
-    %kwdOn __ expression
+    %kwdOn __ expression {% d => d[2] %}
   | %kwdUsing __ %parenOpen %parenClose
 
 tableRef ->
