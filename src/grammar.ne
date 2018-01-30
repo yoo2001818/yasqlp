@@ -38,7 +38,6 @@ const lexer = moo.compile({
       kwdJoin: 'join',
       kwdInner: 'inner',
       kwdCross: 'cross',
-      kwdStraightJoin: 'straight_join',
       kwdLeft: 'left',
       kwdRight: 'right',
       kwdOuter: 'outer',
@@ -116,16 +115,66 @@ selectEntry ->
   %}
 
 tableList ->
-    table (_ %comma _ table):* {% d => [d[0]].concat(d[1].map(v => v[3])) %}
+    table (_ %comma _ table):* {%
+      d => d[0].concat.apply(d[0], d[1].map(v => v[3]))
+    %}
 
-table -> tableRef (__ tableJoin):*
+table -> tableRef (__ tableJoin):* {%
+    d => {
+      let backRef = d[0];
+      return [{ type: normal, table: d[0] }].concat(
+        d[1] && d[1].map(v => {
+          let output = Object.assign({}, v[1], { ref: backRef });
+          backRef = output.table.name || output.table.value;
+          return output;
+        }));
+    }
+    ([{
+      type: 'normal',
+      table: d[0],
+    }].concat(d[1].map((v, i) => )
+  %}
 
 tableJoin ->
-    (%kwdInner | %kwdCross):? __ %kwdJoin __ tableRef (__ joinCondition):?
-  | %kwdStraightJoin __ tableRef
-  | %kwdStraightJoin __ tableRef __ %kwdOn __ expression
-  | (%kwdLeft | %kwdRight) (__ %kwdOuter):? __ %kwdJoin __ tableRef __ joinCondition
-  | %kwdNatural (__ (%kwdLeft | %kwdRight) (__ %kwdOuter):?):? __ %kwdJoin __ tableRef
+    %kwdCross __ %kwdJoin __ tableRef (__ joinCondition):? {%
+      d => ({
+        type: 'cross',
+        table: d[4],
+        where: d[5] && d[5][1],
+      })
+    %}
+  | (%kwdInner):? __ %kwdJoin __ tableRef (__ joinCondition):? {%
+      d => ({
+        type: 'inner',
+        table: d[4],
+        where: d[5] && d[5][1],
+      })
+    %}
+  | joinDirection (__ %kwdOuter):? __ %kwdJoin __ tableRef __ joinCondition {%
+      d => ({
+        type: d[0],
+        table: d[5],
+        where: d[7],
+      })
+    %}
+  | %kwdNatural __ joinDirection (__ %kwdOuter):? __ %kwdJoin __ tableRef {%
+      d => ({
+        type: d[2],
+        table: d[7],
+        natural: true,
+      })
+    %}
+  | %kwdNatural (__ %kwdInner):? __ %kwdJoin __ tableRef {%
+      d => ({
+        type: 'inner',
+        table: d[5],
+        natural: true,
+      })
+    %}
+
+joinDirection ->
+    %kwdLeft {% () => 'left' %}
+  | %kwdRight {% () => 'right' %}
 
 joinCondition ->
     %kwdOn __ expression
