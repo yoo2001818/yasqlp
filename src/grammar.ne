@@ -366,7 +366,7 @@ column ->
     return parseFloat(kwd.value) || 0;
   }
   function parseString(kwd) {
-    let matched = /^'(.+)'$/.exec(kwd.value);
+    let matched = /^'((?:.|\s)+)'$/.exec(kwd.value);
     if (matched == null) return kwd.value;
     return matched[1].replace(/''/g, '\'');
   }
