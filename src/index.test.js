@@ -51,7 +51,7 @@ describe('parser', () => {
     }]);
   });
   it('should parse aggregation', () => {
-    parser.feed('SELECT SUM(*) FROM b;');
+    parser.feed('SELECT SUM(*), SUM(DISTINCT b.a) as b FROM b;');
     expect(parser.results[0]).toEqual([{
       type: 'select',
       columns: [{
@@ -63,9 +63,24 @@ describe('parser', () => {
           name: 'SUM',
           args: [{ type: 'wildcard', table: null }],
         },
+      }, {
+        qualifier: null,
+        name: 'b',
+        value: {
+          type: 'function',
+          qualifier: 'distinct',
+          name: 'SUM',
+          args: [{ type: 'column', table: 'b', name: 'a' }],
+        },
       }],
       from: [{ type: 'normal', table: { name: null, value: 'b' } }],
       where: null,
+    }]);
+  });
+  it('should parse joins', () => {
+    parser.feed('SELECT * FROM a JOIN b ON a.id = b.id;');
+    expect(parser.results[0]).toEqual([{
+
     }]);
   });
 });

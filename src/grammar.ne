@@ -85,7 +85,7 @@ const lexer = moo.compile({
 
 @lexer lexer
 
-main -> (statement %semicolon):+ {% d => d[0].map(v => v[0]) %}
+main -> (statement _ %semicolon):+ {% d => d[0].map(v => v[0]) %}
 statement ->
   selectStatement {% id %}
 
@@ -139,11 +139,11 @@ tableJoin ->
         where: d[5] && d[5][1],
       })
     %}
-  | (%kwdInner):? __ %kwdJoin __ tableRef (__ joinCondition):? {%
+  | (%kwdInner __):? %kwdJoin __ tableRef (__ joinCondition):? {%
       d => ({
         type: 'inner',
-        table: d[4],
-        where: d[5] && d[5][1],
+        table: d[3],
+        where: d[4] && d[4][1],
       })
     %}
   | joinDirection (__ %kwdOuter):? __ %kwdJoin __ tableRef __ joinCondition {%
