@@ -125,7 +125,7 @@ table -> tableRef (__ tableJoin):* {%
       return [{ type: 'normal', table: d[0] }].concat(
         d[1] && d[1].map(v => {
           let output = Object.assign({}, v[1], { ref: backRef });
-          backRef = output.table.name || output.table.value;
+          backRef = output.table;
           return output;
         }));
     }

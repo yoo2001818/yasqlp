@@ -80,7 +80,71 @@ describe('parser', () => {
   it('should parse joins', () => {
     parser.feed('SELECT * FROM a JOIN b ON a.id = b.id;');
     expect(parser.results[0]).toEqual([{
-
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: {
+          type: 'wildcard',
+          table: null,
+        },
+      }],
+      from: [
+        { type: 'normal', table: { name: null, value: 'a' } },
+        {
+          type: 'inner',
+          ref: { name: null, value: 'a' },
+          table: { name: null, value: 'b' },
+          where: {
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: 'a', name: 'id' },
+            right: { type: 'column', table: 'b', name: 'id' },
+          },
+        },
+      ],
+      where: null,
+    }]);
+  });
+  it('should parse multiple joins', () => {
+    parser.feed('SELECT * FROM a JOIN b ON a.id = b.id ' +
+      'LEFT JOIN c ON b.id = c.id;');
+    expect(parser.results[0]).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: {
+          type: 'wildcard',
+          table: null,
+        },
+      }],
+      from: [
+        { type: 'normal', table: { name: null, value: 'a' } },
+        {
+          type: 'inner',
+          ref: { name: null, value: 'a' },
+          table: { name: null, value: 'b' },
+          where: {
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: 'a', name: 'id' },
+            right: { type: 'column', table: 'b', name: 'id' },
+          },
+        },
+        {
+          type: 'left',
+          ref: { name: null, value: 'b' },
+          table: { name: null, value: 'c' },
+          where: {
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: 'b', name: 'id' },
+            right: { type: 'column', table: 'c', name: 'id' },
+          },
+        },
+      ],
+      where: null,
     }]);
   });
 });
