@@ -92,6 +92,8 @@ statement ->
 selectStatement -> %kwdSelect __ selectList
   (__ %kwdFrom __ tableList):?
   (__ %kwdWhere __ expression):?
+  (__ selectOrderBy):?
+  (__ selectLimit):?
   {%
     d => ({
       type: 'select',
@@ -183,6 +185,14 @@ tableRef ->
   | subquery ((__ %kwdAs):? __ keyword):? {%
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
+
+selectOrderBy -> %kwdOrder __ %kwdBy __ orderByRef (_ %comma _ orderByRef):+
+
+orderByRef -> expression (__ orderByDirection):?
+
+orderByDirection -> %kwdAsc | %kwdDesc
+
+selectLimit -> %kwdLimit __ number (_ %comma _ number):?
 
 expression -> expressionOr {% id %}
 
