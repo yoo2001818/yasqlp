@@ -55,6 +55,11 @@ const lexer = moo.compile({
       kwdBy: 'by',
       kwdAsc: 'asc',
       kwdDesc: 'desc',
+      kwdUnion: 'union',
+      kwdIntersect: 'intersect',
+      kwdExcept: 'except',
+      kwdHaving: 'having',
+      kwdOffset: 'offset',
     },
   },
   and: /&&/,
@@ -89,11 +94,24 @@ main -> (statement _ %semicolon):+ {% d => d[0].map(v => v[0]) %}
 statement ->
   selectStatement {% id %}
 
-selectStatement -> %kwdSelect __ selectList
+selectStatement -> selectCompound | selectSimple
+
+selectCompound ->
+    selectCore (__ selectUnionType __ selectCore):+
+      (__ selectOrderBy):?
+      (__ selectLimit):?
+
+selectUnionType -> %kwdUnion | %kwdUnion __ %kwdAll | %kwdIntersect | %kwdExcept
+
+selectSimple ->
+    selectCore
+      (__ selectOrderBy):?
+      (__ selectLimit):?
+
+selectCore -> %kwdSelect __ selectList
   (__ %kwdFrom __ tableList):?
   (__ %kwdWhere __ expression):?
-  (__ selectOrderBy):?
-  (__ selectLimit):?
+  (__ selectGroupBy (__ selectHaving):?):?
   {%
     d => ({
       type: 'select',
@@ -186,13 +204,17 @@ tableRef ->
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
 
-selectOrderBy -> %kwdOrder __ %kwdBy __ orderByRef (_ %comma _ orderByRef):+
+selectOrderBy -> %kwdOrder __ %kwdBy __ orderByRef (_ %comma _ orderByRef):*
 
 orderByRef -> expression (__ orderByDirection):?
 
 orderByDirection -> %kwdAsc | %kwdDesc
 
-selectLimit -> %kwdLimit __ number (_ %comma _ number):?
+selectLimit -> %kwdLimit __ number (_ (%comma | %kwdOffset) _ number):?
+
+selectGroupBy -> %kwdGroup __ %kwdBy __ expression (_ %comma _ expression):*
+
+selectHaving -> %kwdHaving __ expression
 
 expression -> expressionOr {% id %}
 
