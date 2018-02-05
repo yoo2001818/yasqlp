@@ -60,6 +60,9 @@ const lexer = moo.compile({
       kwdExcept: 'except',
       kwdHaving: 'having',
       kwdOffset: 'offset',
+      kwdInsert: 'insert'
+      kwdValues: 'values',
+      kwdInto: 'into',
     },
   },
   and: /&&/,
@@ -92,7 +95,20 @@ const lexer = moo.compile({
 
 main -> (statement _ %semicolon):+ {% d => d[0].map(v => v[0]) %}
 statement ->
-  selectStatement {% id %}
+    selectStatement {% id %}
+  | insertStatement {% id %}
+
+insertStatement ->
+    %kwdInsert __ %kwdInto __ keyword
+      (__ %parenOpen _ column (_ %comma _ column):+ _ %parenClose):?
+      __ insertValue
+
+insertValue ->
+    %kwdValues _ insertTuple (_ %comma _ insertTuple):+
+  | selectStatement
+  | %kwdDefault __ %kwdValues
+
+insertTuple -> %parenOpen _ expression (_ %comma _ expression):+ _ %parenClose
 
 selectStatement -> selectCompound | selectSimple
 
