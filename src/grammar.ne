@@ -60,7 +60,8 @@ const lexer = moo.compile({
       kwdExcept: 'except',
       kwdHaving: 'having',
       kwdOffset: 'offset',
-      kwdInsert: 'insert'
+      kwdLimit: 'limit',
+      kwdInsert: 'insert',
       kwdValues: 'values',
       kwdInto: 'into',
     },
@@ -110,12 +111,13 @@ insertValue ->
 
 insertTuple -> %parenOpen _ expression (_ %comma _ expression):+ _ %parenClose
 
-selectStatement -> selectCompound | selectSimple
+selectStatement -> selectCompound {% id %} | selectSimple {% id %}
 
 selectCompound ->
     selectCore (__ selectUnionType __ selectCore):+
       (__ selectOrderBy):?
       (__ selectLimit):?
+      {% d => d[0] %}
 
 selectUnionType -> %kwdUnion | %kwdUnion __ %kwdAll | %kwdIntersect | %kwdExcept
 
@@ -123,6 +125,7 @@ selectSimple ->
     selectCore
       (__ selectOrderBy):?
       (__ selectLimit):?
+      {% d => d[0] %}
 
 selectCore -> %kwdSelect __ selectList
   (__ %kwdFrom __ tableList):?
