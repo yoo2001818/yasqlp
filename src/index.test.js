@@ -15,7 +15,12 @@ describe('parser', () => {
         name: null,
         value: { type: 'column', table: null, name: 'a' },
       }],
-      from: [{ type: 'normal', table: { name: null, value: 'a' } }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'a' },
+        },
+      }],
       where: null,
     }]);
   });
@@ -28,7 +33,12 @@ describe('parser', () => {
         name: null,
         value: { type: 'wildcard', table: null },
       }],
-      from: [{ type: 'normal', table: { name: null, value: 'test' } }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'test' },
+        },
+      }],
       where: {
         type: 'compare',
         op: '=',
@@ -46,7 +56,12 @@ describe('parser', () => {
         name: null,
         value: { type: 'wildcard', table: null },
       }],
-      from: [{ type: 'normal', table: { name: null, value: 'test' } }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'test' },
+        },
+      }],
       where: null,
     }]);
   });
@@ -73,7 +88,12 @@ describe('parser', () => {
           args: [{ type: 'column', table: 'b', name: 'a' }],
         },
       }],
-      from: [{ type: 'normal', table: { name: null, value: 'b' } }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'b' },
+        },
+      }],
       where: null,
     }]);
   });
@@ -90,11 +110,14 @@ describe('parser', () => {
         },
       }],
       from: [
-        { type: 'normal', table: { name: null, value: 'a' } },
+        {
+          type: 'normal',
+          table: { name: null, value: { type: 'table', name: 'a' } },
+        },
         {
           type: 'inner',
-          ref: { name: null, value: 'a' },
-          table: { name: null, value: 'b' },
+          table: { name: null, value: { type: 'table', name: 'b' } },
+          ref: { name: null, value: { type: 'table', name: 'a' } },
           where: {
             type: 'compare',
             op: '=',
@@ -120,11 +143,14 @@ describe('parser', () => {
         },
       }],
       from: [
-        { type: 'normal', table: { name: null, value: 'a' } },
+        {
+          type: 'normal',
+          table: { name: null, value: { type: 'table', name: 'a' } },
+        },
         {
           type: 'inner',
-          ref: { name: null, value: 'a' },
-          table: { name: null, value: 'b' },
+          ref: { name: null, value: { type: 'table', name: 'a' } },
+          table: { name: null, value: { type: 'table', name: 'b' } },
           where: {
             type: 'compare',
             op: '=',
@@ -134,8 +160,8 @@ describe('parser', () => {
         },
         {
           type: 'left',
-          ref: { name: null, value: 'b' },
-          table: { name: null, value: 'c' },
+          ref: { name: null, value: { type: 'table', name: 'b' } },
+          table: { name: null, value: { type: 'table', name: 'c' } },
           where: {
             type: 'compare',
             op: '=',

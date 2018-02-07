@@ -136,7 +136,7 @@ selectSimple ->
       {% d => d[0] %}
 
 selectCore -> %kwdSelect __ selectList
-  (__ %kwdFrom __ tableList):?
+  (__ %kwdFrom __ selectTableList):?
   (__ %kwdWhere __ expression):?
   (__ selectGroupBy (__ selectHaving):?):?
   {%
