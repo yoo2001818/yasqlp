@@ -64,6 +64,7 @@ const lexer = moo.compile({
       kwdInsert: 'insert',
       kwdValues: 'values',
       kwdInto: 'into',
+      kwdDelete: 'delete',
     },
   },
   and: /&&/,
@@ -98,9 +99,16 @@ main -> (statement _ %semicolon):+ {% d => d[0].map(v => v[0]) %}
 statement ->
     selectStatement {% id %}
   | insertStatement {% id %}
+  | deleteStatement {% id %}
+
+deleteStatement ->
+    %kwdDelete __ %kwdFrom __ table
+      (__ %kwdWhere __ expression):?
+      (__ selectOrderBy):?
+      (__ selectLimit):?
 
 insertStatement ->
-    %kwdInsert __ %kwdInto __ keyword
+    %kwdInsert __ %kwdInto __ table 
       (__ %parenOpen _ column (_ %comma _ column):+ _ %parenClose):?
       __ insertValue
 
@@ -153,12 +161,12 @@ selectEntry ->
     })
   %}
 
-tableList ->
-    table (_ %comma _ table):* {%
+selectTableList ->
+    selectTable (_ %comma _ selectTable):* {%
       d => d[0].concat.apply(d[0], d[1].map(v => v[3]))
     %}
 
-table -> tableRef (__ tableJoin):* {%
+selectTable -> tableRef (__ tableJoin):* {%
     d => {
       let backRef = d[0];
       return [{ type: 'normal', table: d[0] }].concat(
@@ -216,12 +224,17 @@ joinCondition ->
   | %kwdUsing __ %parenOpen %parenClose
 
 tableRef ->
-    keyword ((__ %kwdAs):? __ keyword):? {%
+    table ((__ %kwdAs):? __ keyword):? {%
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
   | subquery ((__ %kwdAs):? __ keyword):? {%
       d => ({ name: d[1] ? d[1][2] : null, value: d[0] })
     %}
+
+table ->
+    keyword {% d => ({ type: 'table', name: d[0] }) %}
+  | keyword _ %period _ keyword
+      {% d => ({ type: 'table', name: d[4], schema: d[0] }) %}
 
 selectOrderBy -> %kwdOrder __ %kwdBy __ orderByRef (_ %comma _ orderByRef):*
 
