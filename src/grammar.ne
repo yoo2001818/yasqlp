@@ -65,6 +65,8 @@ const lexer = moo.compile({
       kwdValues: 'values',
       kwdInto: 'into',
       kwdDelete: 'delete',
+      kwdTrue: 'true',
+      kwdFalse: 'false',
     },
   },
   and: /&&/,
@@ -371,6 +373,7 @@ invertExpr ->
 primaryExpr ->
     number {% id %}
   | string {% id %}
+  | boolean {% id %}
   | column {% id %}
   | subquery {% id %}
   | %asterisk {% () => ({ type: 'wildcard', table: null }) %}
@@ -441,6 +444,9 @@ column ->
   }
 %}
 
+boolean ->
+    %kwdTrue {% d => ({ type: 'boolean', value: true }) %}
+  | %kwdFalse {% d => ({ type: 'boolean', value: false }) %}
 number -> %number {% d => ({ type: 'number', value: parseNumber(d[0]) }) %}
 string -> %string {% d => ({ type: 'string', value: parseString(d[0]) }) %}
 keyword -> %keyword {% d => parseKeyword(d[0]) %}

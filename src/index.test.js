@@ -173,4 +173,50 @@ describe('parser', () => {
       where: null,
     }]);
   });
+  it('should parse schemas in table', () => {
+    parser.feed('SELECT * FROM a.b;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse order by', () => {
+    parser.feed('SELECT * FROM a.b ORDER BY g DESC, a ASC;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse limit', () => {
+    parser.feed('SELECT * FROM a.b ORDER BY g DESC LIMIT 30, 5;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse union', () => {
+    parser.feed('SELECT * FROM a.b UNION ALL ' +
+      'SELECT * FROM a.c ORDER BY g DESC LIMIT 30, 5;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse basic insert query', () => {
+    parser.feed('INSERT INTO users VALUES (\'hey\', 53, TRUE), (\'there\');');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse insert query with columns', () => {
+    parser.feed('INSERT INTO users (name, id) VALUES (\'hey\', 53);');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse insert query with select', () => {
+    parser.feed('INSERT INTO users SELECT * FROM categories;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse delete query', () => {
+    parser.feed('DELETE FROM users WHERE name=\'hey\' LIMIT 30;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse delete query without where', () => {
+    parser.feed('DELETE FROM users;');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse update query', () => {
+    parser.feed('UPDATE FROM users SET name=\'what\';');
+    expect(parser.results[0]).toEqual([]);
+  });
+  it('should parse update query with where', () => {
+    parser.feed('UPDATE FROM users SET name=\'what\', open=true ' +
+      'WHERE name=\'boo\';');
+    expect(parser.results[0]).toEqual([]);
+  });
 });
