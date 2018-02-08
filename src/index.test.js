@@ -211,11 +211,11 @@ describe('parser', () => {
     expect(parser.results[0]).toEqual([]);
   });
   it('should parse update query', () => {
-    parser.feed('UPDATE FROM users SET name=\'what\';');
+    parser.feed('UPDATE users SET name=\'what\';');
     expect(parser.results[0]).toEqual([]);
   });
   it('should parse update query with where', () => {
-    parser.feed('UPDATE FROM users SET name=\'what\', open=true ' +
+    parser.feed('UPDATE users SET name=\'what\', open=true ' +
       'WHERE name=\'boo\';');
     expect(parser.results[0]).toEqual([]);
   });

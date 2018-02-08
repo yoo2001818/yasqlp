@@ -67,6 +67,8 @@ const lexer = moo.compile({
       kwdDelete: 'delete',
       kwdTrue: 'true',
       kwdFalse: 'false',
+      kwdUpdate: 'update',
+      kwdSet: 'set',
     },
   },
   and: /&&/,
@@ -102,6 +104,17 @@ statement ->
     selectStatement {% id %}
   | insertStatement {% id %}
   | deleteStatement {% id %}
+  | updateStatement {% id %}
+
+updateStatement ->
+    %kwdUpdate __ table __ %kwdSet __ updateList
+      (__ %kwdWhere __ expression):?
+      (__ selectOrderBy):?
+      (__ selectLimit):?
+
+updateList -> updateEntry (_ %comma _ updateEntry):*
+
+updateEntry -> keyword _ %eq _ expression
 
 deleteStatement ->
     %kwdDelete __ %kwdFrom __ table
