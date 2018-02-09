@@ -140,15 +140,26 @@ selectCompound ->
     selectCore (__ selectUnionType __ selectCore):+
       (__ selectOrderBy):?
       (__ selectLimit):?
-      {% d => d[0] %}
+      {% d => Object.assign({}, d[0], {
+        unions: d[1].map(v => Object.assign({}, v[3], { unionType: v[1] })),
+        order: d[2] && d[2][1],
+        limit: d[3] && d[3][1],
+      }) %}
 
-selectUnionType -> %kwdUnion | %kwdUnion __ %kwdAll | %kwdIntersect | %kwdExcept
+selectUnionType ->
+    %kwdUnion {% () => 'union' %}
+  | %kwdUnion __ %kwdAll {% () => 'unionAll' %}
+  | %kwdIntersect {% () => 'intersect' %}
+  | %kwdExcept {% () => 'except' %}
 
 selectSimple ->
     selectCore
       (__ selectOrderBy):?
       (__ selectLimit):?
-      {% d => d[0] %}
+      {% d => Object.assign({}, d[0], {
+        order: d[1] && d[1][1],
+        limit: d[2] && d[2][1],
+      }) %}
 
 selectCore -> %kwdSelect __ selectList
   (__ %kwdFrom __ selectTableList):?
@@ -160,6 +171,8 @@ selectCore -> %kwdSelect __ selectList
       columns: d[2],
       from: d[3] && d[3][3],
       where: d[4] && d[4][3],
+      groupBy: d[5] && d[5][1],
+      having: d[5] && d[5][3] && d[5][3][1],
     })
   %}
 
