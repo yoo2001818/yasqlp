@@ -265,16 +265,20 @@ table ->
       {% d => ({ type: 'table', name: d[4], schema: d[0] }) %}
 
 selectOrderBy -> %kwdOrder __ %kwdBy __ orderByRef (_ %comma _ orderByRef):*
+  {% d => [d[4]].concat(d[5].map(v => v[3])) %}
 
 orderByRef -> expression (__ orderByDirection):?
+  {% d => ({ value: d[0], direction: d[1] && d[1][1] }) %}
 
-orderByDirection -> %kwdAsc | %kwdDesc
+orderByDirection -> %kwdAsc {% () => 'asc' %} | %kwdDesc {% () => 'desc' %}
 
 selectLimit -> %kwdLimit __ number (_ (%comma | %kwdOffset) _ number):?
+  {% d => ({ limit: d[2], offset: d[4] && d[4][3] }) %}
 
 selectGroupBy -> %kwdGroup __ %kwdBy __ expression (_ %comma _ expression):*
+  {% d => [d[4]].concat(d[5].map(v => v[3])) %}
 
-selectHaving -> %kwdHaving __ expression
+selectHaving -> %kwdHaving __ expression {% d => d[2] %}
 
 expression -> expressionOr {% id %}
 
