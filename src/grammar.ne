@@ -121,18 +121,37 @@ deleteStatement ->
       (__ %kwdWhere __ expression):?
       (__ selectOrderBy):?
       (__ selectLimit):?
+    {% d => ({
+      type: 'delete',
+      table: d[4],
+      where: d[5] && d[5][3],
+      order: d[6] && d[6][1],
+      limit: d[7] && d[7][1],
+    }) %}
 
 insertStatement ->
     %kwdInsert __ %kwdInto __ table 
       (__ %parenOpen _ column (_ %comma _ column):+ _ %parenClose):?
       __ insertValue
+    {% d => ({
+      type: 'insert',
+      table: d[4],
+      where: d[5] && d[5][3],
+      order: d[6] && d[6][1],
+      limit: d[7] && d[7][1],
+    }) %}
 
 insertValue ->
     %kwdValues _ insertTuple (_ %comma _ insertTuple):+
-  | selectStatement
-  | %kwdDefault __ %kwdValues
+      {% d => ({
+        type: 'values',
+        values: [d[2]].concat(d[3].map(v => v[3])),
+      }) %}
+  | selectStatement {% id %}
+  | %kwdDefault __ %kwdValues {% () => ({ type: 'default' }) %}
 
 insertTuple -> %parenOpen _ expression (_ %comma _ expression):+ _ %parenClose
+  {% d => [d[2]].concat(d[3].map(v => v[3])) %}
 
 selectStatement -> selectCompound {% id %} | selectSimple {% id %}
 
@@ -169,7 +188,7 @@ selectCore -> %kwdSelect __ selectList
     d => ({
       type: 'select',
       columns: d[2],
-      from: d[3] && d[3][3],
+      table: d[3] && d[3][3],
       where: d[4] && d[4][3],
       groupBy: d[5] && d[5][1],
       having: d[5] && d[5][3] && d[5][3][1],
