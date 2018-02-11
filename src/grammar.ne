@@ -111,10 +111,20 @@ updateStatement ->
       (__ %kwdWhere __ expression):?
       (__ selectOrderBy):?
       (__ selectLimit):?
+    {% d => ({
+      type: 'update',
+      table: d[2],
+      values: d[6],
+      where: d[7] && d[7][3],
+      order: d[8] && d[8][1],
+      limit: d[9] && d[9][1],
+    }) %}
 
 updateList -> updateEntry (_ %comma _ updateEntry):*
+    {% d => [d[0]].concat(d[1].map(v => v[3])) %}
 
 updateEntry -> keyword _ %eq _ expression
+    {% d => ({ key: d[0], value: d[4] }) %}
 
 deleteStatement ->
     %kwdDelete __ %kwdFrom __ table
@@ -142,7 +152,7 @@ insertStatement ->
     }) %}
 
 insertValue ->
-    %kwdValues _ insertTuple (_ %comma _ insertTuple):+
+    %kwdValues _ insertTuple (_ %comma _ insertTuple):*
       {% d => ({
         type: 'values',
         values: [d[2]].concat(d[3].map(v => v[3])),
@@ -150,7 +160,7 @@ insertValue ->
   | selectStatement {% id %}
   | %kwdDefault __ %kwdValues {% () => ({ type: 'default' }) %}
 
-insertTuple -> %parenOpen _ expression (_ %comma _ expression):+ _ %parenClose
+insertTuple -> %parenOpen _ expression (_ %comma _ expression):* _ %parenClose
   {% d => [d[2]].concat(d[3].map(v => v[3])) %}
 
 selectStatement -> selectCompound {% id %} | selectSimple {% id %}
