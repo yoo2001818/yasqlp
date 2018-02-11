@@ -198,7 +198,7 @@ selectCore -> %kwdSelect __ selectList
     d => ({
       type: 'select',
       columns: d[2],
-      table: d[3] && d[3][3],
+      from: d[3] && d[3][3],
       where: d[4] && d[4][3],
       groupBy: d[5] && d[5][1],
       having: d[5] && d[5][3] && d[5][3][1],
