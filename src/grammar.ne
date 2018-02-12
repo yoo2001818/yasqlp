@@ -141,7 +141,7 @@ deleteStatement ->
 
 insertStatement ->
     %kwdInsert __ %kwdInto __ table 
-      (__ %parenOpen _ column (_ %comma _ column):+ _ %parenClose):?
+      (__ %parenOpen _ keyword (_ %comma _ keyword):+ _ %parenClose):?
       __ insertValue
     {% d => ({
       type: 'insert',

@@ -349,15 +349,51 @@ describe('parser', () => {
       },
     }]);
   });
-  /*
   it('should parse insert query with columns', () => {
     parser.feed('INSERT INTO users (name, id) VALUES (\'hey\', 53);');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'insert',
+      table: { type: 'table', name: 'users' },
+      columns: ['name', 'id'],
+      values: {
+        type: 'values',
+        values: [
+          [
+            { type: 'string', value: 'hey' },
+            { type: 'number', value: 53 },
+          ],
+        ],
+      },
+    }]);
   });
   it('should parse insert query with select', () => {
     parser.feed('INSERT INTO users SELECT * FROM categories;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'insert',
+      table: { type: 'table', name: 'users' },
+      columns: null,
+      values: {
+        type: 'select',
+        columns: [{
+          qualifier: null,
+          name: null,
+          value: { type: 'wildcard', table: null },
+        }],
+        from: [{
+          type: 'normal',
+          table: {
+            name: null, value: { type: 'table', name: 'categories' },
+          },
+        }],
+        where: null,
+        groupBy: null,
+        having: null,
+        limit: null,
+        order: null,
+      },
+    }]);
   });
+  /*
   it('should parse delete query', () => {
     parser.feed('DELETE FROM users WHERE name=\'hey\' LIMIT 30;');
     expect(parser.results[0]).toEqual([]);
