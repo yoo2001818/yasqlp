@@ -135,8 +135,8 @@ deleteStatement ->
       type: 'delete',
       table: d[4],
       where: d[5] && d[5][3],
-      order: d[6] && d[6][1],
-      limit: d[7] && d[7][1],
+      order: (d[6] && d[6][1]) || null,
+      limit: (d[7] && d[7][1]) || null,
     }) %}
 
 insertStatement ->
@@ -146,9 +146,8 @@ insertStatement ->
     {% d => ({
       type: 'insert',
       table: d[4],
-      where: d[5] && d[5][3],
-      order: d[6] && d[6][1],
-      limit: d[7] && d[7][1],
+      columns: d[5] && [d[5][3]].concat(d[5][4].map(v => v[3])),
+      values: d[7],
     }) %}
 
 insertValue ->
@@ -302,7 +301,7 @@ orderByRef -> expression (__ orderByDirection):?
 orderByDirection -> %kwdAsc {% () => 'asc' %} | %kwdDesc {% () => 'desc' %}
 
 selectLimit -> %kwdLimit __ number (_ (%comma | %kwdOffset) _ number):?
-  {% d => ({ limit: d[2], offset: d[4] && d[4][3] }) %}
+  {% d => ({ limit: d[2] || null, offset: (d[4] && d[4][3]) || null }) %}
 
 selectGroupBy -> %kwdGroup __ %kwdBy __ expression (_ %comma _ expression):*
   {% d => [d[4]].concat(d[5].map(v => v[3])) %}

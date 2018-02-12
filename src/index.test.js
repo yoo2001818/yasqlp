@@ -197,28 +197,159 @@ describe('parser', () => {
       order: null,
     }]);
   });
-  /*
   it('should parse schemas in table', () => {
     parser.feed('SELECT * FROM a.b;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'wildcard', table: null },
+      }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'b', schema: 'a' },
+        },
+      }],
+      where: null,
+      groupBy: null,
+      having: null,
+      limit: null,
+      order: null,
+    }]);
   });
   it('should parse order by', () => {
     parser.feed('SELECT * FROM a.b ORDER BY g DESC, a ASC;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'wildcard', table: null },
+      }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'b', schema: 'a' },
+        },
+      }],
+      where: null,
+      groupBy: null,
+      having: null,
+      limit: null,
+      order: [
+        {
+          direction: 'desc',
+          value: { type: 'column', table: null, name: 'g' },
+        },
+        {
+          direction: 'asc',
+          value: { type: 'column', table: null, name: 'a' },
+        },
+      ],
+    }]);
   });
   it('should parse limit', () => {
     parser.feed('SELECT * FROM a.b ORDER BY g DESC LIMIT 30, 5;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'wildcard', table: null },
+      }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'b', schema: 'a' },
+        },
+      }],
+      where: null,
+      groupBy: null,
+      having: null,
+      limit: {
+        limit: { type: 'number', value: 30 },
+        offset: null,
+      },
+      order: [
+        {
+          direction: 'desc',
+          value: { type: 'column', table: null, name: 'g' },
+        },
+      ],
+    }]);
   });
   it('should parse union', () => {
     parser.feed('SELECT * FROM a.b UNION ALL ' +
       'SELECT * FROM a.c ORDER BY g DESC LIMIT 30, 5;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'wildcard', table: null },
+      }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'b', schema: 'a' },
+        },
+      }],
+      where: null,
+      groupBy: null,
+      having: null,
+      unions: [{
+        type: 'select',
+        unionType: 'unionAll',
+        columns: [{
+          qualifier: null,
+          name: null,
+          value: { type: 'wildcard', table: null },
+        }],
+        from: [{
+          type: 'normal',
+          table: {
+            name: null, value: { type: 'table', name: 'c', schema: 'a' },
+          },
+        }],
+        where: null,
+        groupBy: null,
+        having: null,
+      }],
+      limit: {
+        limit: { type: 'number', value: 30 },
+        offset: null,
+      },
+      order: [
+        {
+          direction: 'desc',
+          value: { type: 'column', table: null, name: 'g' },
+        },
+      ],
+    }]);
   });
   it('should parse basic insert query', () => {
     parser.feed('INSERT INTO users VALUES (\'hey\', 53, TRUE), (\'there\');');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'insert',
+      table: { type: 'table', name: 'users' },
+      columns: null,
+      values: {
+        type: 'values',
+        values: [
+          [
+            { type: 'string', value: 'hey' },
+            { type: 'number', value: 53 },
+            { type: 'boolean', value: true },
+          ], [
+            { type: 'string', value: 'there' },
+          ],
+        ],
+      },
+    }]);
   });
+  /*
   it('should parse insert query with columns', () => {
     parser.feed('INSERT INTO users (name, id) VALUES (\'hey\', 53);');
     expect(parser.results[0]).toEqual([]);
