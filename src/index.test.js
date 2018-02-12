@@ -393,23 +393,62 @@ describe('parser', () => {
       },
     }]);
   });
-  /*
   it('should parse delete query', () => {
     parser.feed('DELETE FROM users WHERE name=\'hey\' LIMIT 30;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'delete',
+      table: { type: 'table', name: 'users' },
+      where: {
+        type: 'compare',
+        op: '=',
+        left: { type: 'column', table: null, name: 'name' },
+        right: { type: 'string', value: 'hey' },
+      },
+      order: null,
+      limit: { limit: { type: 'number', value: 30 }, offset: null },
+    }]);
   });
   it('should parse delete query without where', () => {
     parser.feed('DELETE FROM users;');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'delete',
+      table: { type: 'table', name: 'users' },
+      where: null,
+      order: null,
+      limit: null,
+    }]);
   });
   it('should parse update query', () => {
     parser.feed('UPDATE users SET name=\'what\';');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'update',
+      table: { type: 'table', name: 'users' },
+      values: [
+        { key: 'name', value: { type: 'string', value: 'what' } },
+      ],
+      where: null,
+      order: null,
+      limit: null,
+    }]);
   });
   it('should parse update query with where', () => {
     parser.feed('UPDATE users SET name=\'what\', open=true ' +
       'WHERE name=\'boo\';');
-    expect(parser.results[0]).toEqual([]);
+    expect(parser.results[0]).toEqual([{
+      type: 'update',
+      table: { type: 'table', name: 'users' },
+      values: [
+        { key: 'name', value: { type: 'string', value: 'what' } },
+        { key: 'open', value: { type: 'boolean', value: true } },
+      ],
+      where: {
+        type: 'compare',
+        op: '=',
+        left: { type: 'column', table: null, name: 'name' },
+        right: { type: 'string', value: 'boo' },
+      },
+      order: null,
+      limit: null,
+    }]);
   });
-  */
 });
