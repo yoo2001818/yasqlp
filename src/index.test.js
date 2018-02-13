@@ -1,14 +1,9 @@
-import nearley from 'nearley';
-import grammar from './grammar.ne';
+import parse from './index';
 
 describe('parser', () => {
-  var parser;
-  beforeEach(() => {
-    parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
-  });
   it('should parse basic SQL', () => {
-    parser.feed('SELECT a FROM a;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('SELECT a FROM a;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -29,8 +24,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse strings', () => {
-    parser.feed('select * from `test` where c = \'Hello, it\'\'s me\nyes!\';');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('select * from `test` where c = \'Hello, it\'\'s me\nyes!\';');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -56,8 +51,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse comments', () => {
-    parser.feed('select * -- How about no/*\n from `test` /* or\n /*/ ;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('select * -- How about no/*\n from `test` /* or\n /*/ ;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -78,8 +73,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse aggregation', () => {
-    parser.feed('SELECT SUM(*), SUM(DISTINCT b.a) as b FROM b;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('SELECT SUM(*), SUM(DISTINCT b.a) as b FROM b;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -114,8 +109,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse joins', () => {
-    parser.feed('SELECT * FROM a JOIN b ON a.id = b.id;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('SELECT * FROM a JOIN b ON a.id = b.id;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -150,9 +145,9 @@ describe('parser', () => {
     }]);
   });
   it('should parse multiple joins', () => {
-    parser.feed('SELECT * FROM a JOIN b ON a.id = b.id ' +
+    const result = parse('SELECT * FROM a JOIN b ON a.id = b.id ' +
       'LEFT JOIN c ON b.id = c.id;');
-    expect(parser.results[0]).toEqual([{
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -198,8 +193,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse schemas in table', () => {
-    parser.feed('SELECT * FROM a.b;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('SELECT * FROM a.b;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -220,8 +215,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse order by', () => {
-    parser.feed('SELECT * FROM a.b ORDER BY g DESC, a ASC;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('SELECT * FROM a.b ORDER BY g DESC, a ASC;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -251,8 +246,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse limit', () => {
-    parser.feed('SELECT * FROM a.b ORDER BY g DESC LIMIT 30, 5;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('SELECT * FROM a.b ORDER BY g DESC LIMIT 30, 5;');
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -281,9 +276,9 @@ describe('parser', () => {
     }]);
   });
   it('should parse union', () => {
-    parser.feed('SELECT * FROM a.b UNION ALL ' +
+    const result = parse('SELECT * FROM a.b UNION ALL ' +
       'SELECT * FROM a.c ORDER BY g DESC LIMIT 30, 5;');
-    expect(parser.results[0]).toEqual([{
+    expect(result).toEqual([{
       type: 'select',
       columns: [{
         qualifier: null,
@@ -330,8 +325,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse basic insert query', () => {
-    parser.feed('INSERT INTO users VALUES (\'hey\', 53, TRUE), (\'there\');');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('INSERT INTO users VALUES (\'hey\', 53, TRUE), (\'there\');');
+    expect(result).toEqual([{
       type: 'insert',
       table: { type: 'table', name: 'users' },
       columns: null,
@@ -350,8 +345,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse insert query with columns', () => {
-    parser.feed('INSERT INTO users (name, id) VALUES (\'hey\', 53);');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('INSERT INTO users (name, id) VALUES (\'hey\', 53);');
+    expect(result).toEqual([{
       type: 'insert',
       table: { type: 'table', name: 'users' },
       columns: ['name', 'id'],
@@ -367,8 +362,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse insert query with select', () => {
-    parser.feed('INSERT INTO users SELECT * FROM categories;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('INSERT INTO users SELECT * FROM categories;');
+    expect(result).toEqual([{
       type: 'insert',
       table: { type: 'table', name: 'users' },
       columns: null,
@@ -394,8 +389,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse delete query', () => {
-    parser.feed('DELETE FROM users WHERE name=\'hey\' LIMIT 30;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('DELETE FROM users WHERE name=\'hey\' LIMIT 30;');
+    expect(result).toEqual([{
       type: 'delete',
       table: { type: 'table', name: 'users' },
       where: {
@@ -409,8 +404,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse delete query without where', () => {
-    parser.feed('DELETE FROM users;');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('DELETE FROM users;');
+    expect(result).toEqual([{
       type: 'delete',
       table: { type: 'table', name: 'users' },
       where: null,
@@ -419,8 +414,8 @@ describe('parser', () => {
     }]);
   });
   it('should parse update query', () => {
-    parser.feed('UPDATE users SET name=\'what\';');
-    expect(parser.results[0]).toEqual([{
+    const result = parse('UPDATE users SET name=\'what\';');
+    expect(result).toEqual([{
       type: 'update',
       table: { type: 'table', name: 'users' },
       values: [
@@ -432,9 +427,9 @@ describe('parser', () => {
     }]);
   });
   it('should parse update query with where', () => {
-    parser.feed('UPDATE users SET name=\'what\', open=true ' +
+    const result = parse('UPDATE users SET name=\'what\', open=true ' +
       'WHERE name=\'boo\';');
-    expect(parser.results[0]).toEqual([{
+    expect(result).toEqual([{
       type: 'update',
       table: { type: 'table', name: 'users' },
       values: [

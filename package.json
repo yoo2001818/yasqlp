@@ -1,6 +1,6 @@
 {
   "name": "yasqlp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Yet another SQL parser for Javascript",
   "main": "lib/index.js",
   "scripts": {
@@ -11,6 +11,9 @@
     "lint": "eslint src/"
   },
   "jest": {
+    "moduleNameMapper": {
+      "^(.+)grammar(.js)?$": "$1grammar.ne"
+    },
     "transform": {
       "^.+\\.jsx?$": "babel-jest",
       "^.+\\.ne$": "<rootDir>/src/jestNearley.js"
