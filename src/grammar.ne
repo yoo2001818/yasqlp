@@ -313,13 +313,13 @@ expression -> expressionOr {% id %}
 expressionOr ->
     expressionAnd {% id %}
   | (expressionAnd __ (%kwdOr|%or) __):+ expressionAnd {%
-      d => ({ type: 'binary', op: '||', values: d[0].map(b => b[0]).concat(d[1]) })
+      d => ({ type: 'logical', op: '||', values: d[0].map(b => b[0]).concat(d[1]) })
     %}
 
 expressionAnd ->
     expressionFactor {% id %}
   | (expressionFactor __ (%kwdAnd|%and) __):+ expressionFactor {%
-      d => ({ type: 'binary', op: '&&', values: d[0].map(b => b[0]).concat(d[1]) })
+      d => ({ type: 'logical', op: '&&', values: d[0].map(b => b[0]).concat(d[1]) })
     %}
 
 expressionFactor -> 
