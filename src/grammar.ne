@@ -436,7 +436,7 @@ primaryExpr ->
   | subquery {% id %}
   | %asterisk {% () => ({ type: 'wildcard', table: null }) %}
   | funcExpression {% id %}
-  | %parenOpen _ expression _ %parenClose {% d => d[1] %}
+  | %parenOpen _ expression _ %parenClose {% d => d[2] %}
   | caseExpression {% id %}
 
 subquery -> %parenOpen _ selectStatement _ %parenClose {% d => d[2] %}

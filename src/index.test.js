@@ -23,6 +23,61 @@ describe('parser', () => {
       order: null,
     }]);
   });
+  it('should parse compound SQL', () => {
+    const result = parse('SELECT a FROM a ' +
+      'WHERE (a = 1 OR a = 2) AND (b = 1 OR b = 2);');
+    expect(result).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'column', table: null, name: 'a' },
+      }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'a' },
+        },
+      }],
+      where: {
+        type: 'logical',
+        op: '&&',
+        values: [{
+          type: 'logical',
+          op: '||',
+          values: [{
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: null, name: 'a' },
+            right: { type: 'number', value: 1 },
+          }, {
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: null, name: 'a' },
+            right: { type: 'number', value: 2 },
+          }],
+        }, {
+          type: 'logical',
+          op: '||',
+          values: [{
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: null, name: 'b' },
+            right: { type: 'number', value: 1 },
+          }, {
+            type: 'compare',
+            op: '=',
+            left: { type: 'column', table: null, name: 'b' },
+            right: { type: 'number', value: 2 },
+          }],
+        }],
+      },
+      groupBy: null,
+      having: null,
+      limit: null,
+      order: null,
+    }]);
+  });
   it('should parse strings', () => {
     const result = parse('select * from `test` where c = \'Hello, it\'\'s me\nyes!\';');
     expect(result).toEqual([{

@@ -1,6 +1,6 @@
 {
   "name": "yasqlp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Yet another SQL parser for Javascript",
   "main": "lib/index.js",
   "scripts": {
