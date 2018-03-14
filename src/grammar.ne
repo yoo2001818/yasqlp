@@ -69,11 +69,11 @@ const lexer = moo.compile({
       kwdFalse: 'false',
       kwdUpdate: 'update',
       kwdSet: 'set',
+      kwdNot: 'not',
     },
   },
   and: /&&/,
   or: /\|\|/,
-  bang: /!/,
   tilde: /~/,
   shiftUp: /<</,
   shiftDown: />>/,
@@ -83,6 +83,7 @@ const lexer = moo.compile({
   lt: /</,
   gte: />=/,
   gt: />/,
+  bang: /!/,
   percent: /%/,
   comma: /,/,
   period: /\./,
@@ -367,7 +368,7 @@ rowValue ->
   | %kwdDefault {% d => ({ type: 'default' }) %}
   | shiftExpr {% id %}
 
-compareOp -> %ne | %eq | %lte | %lt | %gte | %gt
+compareOp -> %ne {% () => [{ value: '!=' }] %} | %eq | %lte | %lt | %gte | %gt
 
 shiftExpr ->
     addExpr {% id %}
@@ -425,7 +426,8 @@ valueExpr ->
 
 invertExpr ->
     primaryExpr {% id %}
-  | %bang _ primaryExpr {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
+  | (%bang|%kwdNot) _ primaryExpr
+      {% d => ({ type: 'unary', op: '!', value: d[2] }) %}
   | %tilde _ primaryExpr {% d => ({ type: 'unary', op: '~', value: d[2] }) %}
 
 primaryExpr ->

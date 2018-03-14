@@ -25,7 +25,7 @@ describe('parser', () => {
   });
   it('should parse compound SQL', () => {
     const result = parse('SELECT a FROM a ' +
-      'WHERE (a = 1 OR a = 2) AND (b = 1 OR b = 2);');
+      'WHERE (a = 1 OR a <> 2) AND NOT(b = 1 OR b != 2);');
     expect(result).toEqual([{
       type: 'select',
       columns: [{
@@ -52,24 +52,28 @@ describe('parser', () => {
             right: { type: 'number', value: 1 },
           }, {
             type: 'compare',
-            op: '=',
+            op: '!=',
             left: { type: 'column', table: null, name: 'a' },
             right: { type: 'number', value: 2 },
           }],
         }, {
-          type: 'logical',
-          op: '||',
-          values: [{
-            type: 'compare',
-            op: '=',
-            left: { type: 'column', table: null, name: 'b' },
-            right: { type: 'number', value: 1 },
-          }, {
-            type: 'compare',
-            op: '=',
-            left: { type: 'column', table: null, name: 'b' },
-            right: { type: 'number', value: 2 },
-          }],
+          type: 'unary',
+          op: '!',
+          value: {
+            type: 'logical',
+            op: '||',
+            values: [{
+              type: 'compare',
+              op: '=',
+              left: { type: 'column', table: null, name: 'b' },
+              right: { type: 'number', value: 1 },
+            }, {
+              type: 'compare',
+              op: '!=',
+              left: { type: 'column', table: null, name: 'b' },
+              right: { type: 'number', value: 2 },
+            }],
+          },
         }],
       },
       groupBy: null,
