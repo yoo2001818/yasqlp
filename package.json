@@ -1,6 +1,6 @@
 {
   "name": "yasqlp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Yet another SQL parser for Javascript",
   "main": "lib/index.js",
   "scripts": {
@@ -31,28 +31,28 @@
   "homepage": "https://github.com/yoo2001818/yasqlp#readme",
   "dependencies": {
     "moo": "git+https://github.com/camullen/moo.git#dcc5aba2ed2236909a229db16a18e18f0726bb8b",
-    "nearley": "^2.11.0"
+    "nearley": "^2.13.0"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-eslint": "^8.0.3",
-    "babel-jest": "^21.2.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.5",
+    "babel-jest": "^23.2.0",
     "babel-plugin-transform-async-generator-functions": "^6.24.1",
-    "babel-preset-env": "^1.6.1",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "babel-register": "^6.26.0",
-    "core-js": "^2.5.2",
-    "eslint": "^4.13.0",
-    "eslint-config-semistandard": "^11.0.0",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-config-standard-jsx": "^4.0.2",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-node": "^5.2.1",
-    "eslint-plugin-promise": "^3.6.0",
-    "eslint-plugin-react": "^7.5.1",
-    "eslint-plugin-standard": "^3.0.1",
-    "jest": "^21.2.1",
-    "jest-cli": "^21.2.1"
+    "core-js": "^2.5.7",
+    "eslint": "^5.0.1",
+    "eslint-config-semistandard": "^12.0.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-config-standard-jsx": "^5.0.0",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-react": "^7.10.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "jest": "^23.3.0",
+    "jest-cli": "^23.3.0"
   },
   "optionalDependencies": {}
 }
