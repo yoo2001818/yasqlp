@@ -70,6 +70,26 @@ const lexer = moo.compile({
       kwdUpdate: 'update',
       kwdSet: 'set',
       kwdNot: 'not',
+      kwdSome: 'some',
+      kwdAny: 'any',
+      kwdExists: 'exists',
+      kwdAvg: 'avg',
+      kwdMax: 'max',
+      kwdMin: 'min',
+      kwdSum: 'sum',
+      kwdEvery: 'every',
+      kwdSome: 'some',
+      kwdCount: 'count',
+      kwdBitAnd: 'bit_and',
+      kwdBitOr: 'bit_or',
+      kwdBitXor: 'bit_xor',
+      kwdStd: 'std',
+      kwdStddev: 'stddev',
+      kwdStddevPop: 'stddev_pop',
+      kwdStddevSamp: 'stddev_samp',
+      kwdVarPop: 'var_pop',
+      kwdVarSamp: 'var_samp',
+      kwdVariance: 'variance',
     },
   },
   and: /&&/,
@@ -343,7 +363,7 @@ predicate ->
         { type: 'in', target: d[0], values: d[5] })
     %}
   | rowValue __ %kwdIs __ (%kwdNot  __):? rowValue {%
-      d => wrapNot(d[2],
+      d => wrapNot(d[4],
         { type: 'compare', op: 'is', left: d[0], right: d[5] })
     %}
   | rowValue __ (%kwdNot __):? %kwdLike __ primaryExpr {%
@@ -353,6 +373,9 @@ predicate ->
   | rowValue __ (%kwdNot __):? %kwdBetween __ rowValue __ %kwdAnd __ rowValue {%
       d => wrapNot(d[2],
         { type: 'between', target: d[0], min: d[5], max: d[9] })
+    %}
+  | %kwdExists _ subquery {%
+      d => ({ type: 'exists', value: d[2] })
     %}
   | rowValue {% id %}
 
@@ -437,18 +460,52 @@ primaryExpr ->
   | column {% id %}
   | subquery {% id %}
   | %asterisk {% () => ({ type: 'wildcard', table: null }) %}
+  | aggrExpression {% id %}
   | funcExpression {% id %}
   | %parenOpen _ expression _ %parenClose {% d => d[2] %}
   | caseExpression {% id %}
 
 subquery -> %parenOpen _ selectStatement _ %parenClose {% d => d[2] %}
 
-funcExpression -> keyword _ %parenOpen _ (aggrQualifier __):? funcArgs _ %parenClose {%
+aggrExpression -> aggrOp _ %parenOpen _ (aggrQualifier __):? expression _ %parenClose {%
+    d => ({
+      type: 'aggregation',
+      name: d[0],
+      qualifier: d[4] && d[4][0],
+      value: d[5],
+    })
+  %}
+
+aggrOp -> %kwdSome {% () => 'some' %} |
+  %kwdAny {% () => 'any' %} |
+  %kwdAll {% () => 'all' %} |
+  %kwdAvg {% () => 'avg' %} |
+  %kwdMax {% () => 'max' %} |
+  %kwdMin {% () => 'min' %} |
+  %kwdSum {% () => 'sum' %} |
+  %kwdEvery {% () => 'every' %} |
+  %kwdSome {% () => 'some' %} |
+  %kwdCount {% () => 'count' %} |
+  %kwdBitAnd {% () => 'bit_and' %} |
+  %kwdBitOr {% () => 'bit_or' %} |
+  %kwdBitXor {% () => 'bit_xor' %} |
+  %kwdStd {% () => 'stddev_pop' %} |
+  %kwdStddev {% () => 'stddev_pop' %} |
+  %kwdStddevPop {% () => 'stddev_pop' %} |
+  %kwdStddevSamp {% () => 'stddev_samp' %} |
+  %kwdVarPop {% () => 'var_pop' %} |
+  %kwdVarSamp {% () => 'var_samp' %} |
+  %kwdVariance {% () => 'variance' %}
+
+aggrQualifier ->
+    %kwdDistinct {% () => 'distinct' %}
+  | %kwdAll {% () => 'all' %}
+
+funcExpression -> keyword _ %parenOpen _ funcArgs _ %parenClose {%
     d => ({
       type: 'function',
       name: d[0],
-      qualifier: d[4] && d[4][0],
-      args: d[5],
+      args: d[4],
     })
   %}
 
@@ -457,10 +514,6 @@ funcArgs ->
   | expression (_ "," _ expression):* {%
       d => [d[0]].concat(d[1].map(v => v[3]))
     %}
-
-aggrQualifier ->
-    %kwdDistinct {% () => 'distinct' %}
-  | %kwdAll {% () => 'all' %}
 
 caseExpression ->
     %kwdCase __ expression __ (caseExprCase __):+ (%kwdElse __ expression __):? %kwdEnd {%

@@ -139,19 +139,19 @@ describe('parser', () => {
         qualifier: null,
         name: null,
         value: {
-          type: 'function',
+          type: 'aggregation',
           qualifier: null,
-          name: 'SUM',
-          args: [{ type: 'wildcard', table: null }],
+          name: 'sum',
+          value: { type: 'wildcard', table: null },
         },
       }, {
         qualifier: null,
         name: 'b',
         value: {
-          type: 'function',
+          type: 'aggregation',
           qualifier: 'distinct',
-          name: 'SUM',
-          args: [{ type: 'column', table: 'b', name: 'a' }],
+          name: 'sum',
+          value: { type: 'column', table: 'b', name: 'a' },
         },
       }],
       from: [{
@@ -161,6 +161,69 @@ describe('parser', () => {
         },
       }],
       where: null,
+      groupBy: null,
+      having: null,
+      limit: null,
+      order: null,
+    }]);
+  });
+  it('should parse functions', () => {
+    const result = parse('SELECT CONCAT(\'hello\', b.world) as b FROM b;');
+    expect(result).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: 'b',
+        value: {
+          type: 'function',
+          name: 'CONCAT',
+          args: [{
+            type: 'string', value: 'hello',
+          }, {
+            type: 'column', table: 'b', name: 'world',
+          }],
+        },
+      }],
+      from: [{
+        type: 'normal',
+        table: {
+          name: null, value: { type: 'table', name: 'b' },
+        },
+      }],
+      where: null,
+      groupBy: null,
+      having: null,
+      limit: null,
+      order: null,
+    }]);
+  });
+  it('should parse exists', () => {
+    const result = parse('SELECT 1 WHERE EXISTS(SELECT 5);');
+    expect(result).toEqual([{
+      type: 'select',
+      columns: [{
+        qualifier: null,
+        name: null,
+        value: { type: 'number', value: 1 },
+      }],
+      from: null,
+      where: {
+        type: 'exists',
+        value: {
+          type: 'select',
+          columns: [{
+            qualifier: null,
+            name: null,
+            value: { type: 'number', value: 5 },
+          }],
+          from: null,
+          where: null,
+          groupBy: null,
+          having: null,
+          limit: null,
+          order: null,
+        }
+      },
       groupBy: null,
       having: null,
       limit: null,
